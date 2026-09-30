@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "timmerClock.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -1,0 +1,6 @@
+framework module SSDateTimePicker {
+  umbrella header "SSDateTimePicker-umbrella.h"
+
+  export *
+  module * { export * }
+}
