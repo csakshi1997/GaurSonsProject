@@ -134,7 +134,6 @@ class ApplicantWebService {
                 Profile_Image__c,
                 Note__c,
 
-                Created_Time__c,
                 CreatedDate
 
             FROM Applicant_Details__c

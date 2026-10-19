@@ -540,32 +540,95 @@ class CompanyDetailsEOIScreenVC: UIViewController {
         }
     }
     
+//    func clearAllFields() {
+//        nameOfCompnaytxtFld?.text = EMPTY
+//        dateOfIncorporationtxtFld?.text = EMPTY
+//        nameOfContactPersontxtFld?.text = EMPTY
+//        phoneNumberWorktxtFld?.text = EMPTY
+//        mobileNumberetxtFld?.text = EMPTY
+//        emailtxtFld?.text = EMPTY
+//        PANNumbertxtFld?.text = EMPTY
+//        PANUploadtxtFld?.text = EMPTY
+//        corporateNumbertxtFld?.text = EMPTY
+//        corporateNumberUploadtxtFld?.text = EMPTY
+//        designatedPartnerIdentificationNumbertxtFld?.text = EMPTY
+//        designatedPartnerIdentificationNumberUploadtxtFld?.text = EMPTY
+//        PriorInvestmenttxtFld?.text = EMPTY
+//        uploadCOItxtFld?.text = EMPTY
+//        uploadResolutionTxtFld?.text = EMPTY
+//        gstNotxtFld?.text = EMPTY
+//        uploadGSTtxtFld?.text = EMPTY
+//        boardResolutionDateTxtFld?.text = EMPTY
+//        authorizationLetterDatetxtFld?.text = EMPTY
+//        authorizationLetterUploadtxtFld?.text = EMPTY
+//        partnershipDatetxtFld?.text = EMPTY
+//        uploadPartnershiptxtFld?.text = EMPTY
+//        registrationStateTxtFld?.text = EMPTY
+//        registrationNoTxtFld?.text = EMPTY
+//        uploadRegistrationCertifcatetxtFld?.text = EMPTY
+//    }
+    
     func clearAllFields() {
-        nameOfCompnaytxtFld?.text = EMPTY
-        dateOfIncorporationtxtFld?.text = EMPTY
-        nameOfContactPersontxtFld?.text = EMPTY
-        phoneNumberWorktxtFld?.text = EMPTY
-        mobileNumberetxtFld?.text = EMPTY
-        emailtxtFld?.text = EMPTY
-        PANNumbertxtFld?.text = EMPTY
-        PANUploadtxtFld?.text = EMPTY
-        corporateNumbertxtFld?.text = EMPTY
-        corporateNumberUploadtxtFld?.text = EMPTY
-        designatedPartnerIdentificationNumbertxtFld?.text = EMPTY
-        designatedPartnerIdentificationNumberUploadtxtFld?.text = EMPTY
-        PriorInvestmenttxtFld?.text = EMPTY
-        uploadCOItxtFld?.text = EMPTY
-        uploadResolutionTxtFld?.text = EMPTY
-        gstNotxtFld?.text = EMPTY
-        uploadGSTtxtFld?.text = EMPTY
-        boardResolutionDateTxtFld?.text = EMPTY
-        authorizationLetterDatetxtFld?.text = EMPTY
-        authorizationLetterUploadtxtFld?.text = EMPTY
-        partnershipDatetxtFld?.text = EMPTY
-        uploadPartnershiptxtFld?.text = EMPTY
-        registrationStateTxtFld?.text = EMPTY
-        registrationNoTxtFld?.text = EMPTY
-        uploadRegistrationCertifcatetxtFld?.text = EMPTY
+
+        // 1. Clear all text fields
+        let textFields: [MDCOutlinedTextField?] = [
+            nameOfCompnaytxtFld,
+            dateOfIncorporationtxtFld,
+            phoneNumberWorktxtFld,
+            mobileNumberetxtFld,
+            emailtxtFld,
+            PANNumbertxtFld,
+            PANUploadtxtFld,
+            corporateNumbertxtFld,
+            corporateNumberUploadtxtFld,
+            designatedPartnerIdentificationNumbertxtFld,
+            designatedPartnerIdentificationNumberUploadtxtFld,
+            boardResolutionDateTxtFld,
+            uploadResolutionTxtFld,
+            gstNotxtFld,
+            uploadGSTtxtFld,
+            nameOfContactPersontxtFld,
+            PriorInvestmenttxtFld,
+            ProjectNametxtFld,
+            unitNumbertxtFld,
+            uploadCOItxtFld,
+            authorizationLetterDatetxtFld,
+            authorizationLetterUploadtxtFld,
+            partnershipDatetxtFld,
+            uploadPartnershiptxtFld,
+            registrationStateTxtFld,
+            registrationNoTxtFld,
+            uploadRegistrationCertifcatetxtFld
+        ]
+
+        textFields.forEach { $0?.text = EMPTY }
+
+        // 2. Reset conditional prior-investment fields
+        ProjectNametxtFld?.text = EMPTY
+        unitNumbertxtFld?.text = EMPTY
+
+        ProjectNameStack?.isHidden = true
+        UnitNumberStack?.isHidden = true
+
+        // 3. Reset date pickers
+        DOIDatePicker.date = Date()
+        resolutionDatePicker.date = Date()
+        authLetterDatePicker.date = Date()
+        deedDatePicker.date = Date()
+
+        // 4. Reset the active upload field
+        activeUploadField = nil
+
+        // 5. Reset primary selection flags
+        isPrimaryYES = false
+        isPrimaryNO = false
+
+        // 6. Clear keyboard and dropdowns
+        view.endEditing(true)
+        priorInvestmentDropDown.hide()
+        registrationStateDropDown.hide()
+
+        print("Company details form reset successfully")
     }
     
     @objc func dateChangedForStart(_ sender: UIDatePicker) {

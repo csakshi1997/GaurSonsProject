@@ -37,6 +37,7 @@ class InventroyDetailsVC: UIViewController {
     var onUnitBlocked: ((String) -> Void)?
     var EOiModelDict = EOIModel(dict: [:])
     var isFromDetails: Bool = false
+    var isUnitAlreadyBlocked: Bool = false
     
     private struct UnitSection {
         let id: String
@@ -575,10 +576,39 @@ extension InventroyDetailsVC: UICollectionViewDataSource, UICollectionViewDelega
         detailsVC.modalTransitionStyle = .crossDissolve
         detailsVC.isComingFromEOI = isComingFromEOIDetailScreen
         detailsVC.oppId = oppId
+        detailsVC.isUnitAlreadyBlocked = isUnitAlreadyBlocked
 
+//        detailsVC.onUnitBlocked = { [weak self] unitId in
+//
+//            guard let self = self else { return }
+//
+//            if let index = GlobalData.allInventoryProjects.firstIndex(where: {
+//                $0.id == unitId
+//            }) {
+//                GlobalData.allInventoryProjects[index].unitStatus = "Hold"
+//            }
+//
+//            self.updateUI()
+//
+//            self.rebuildFloorSections()
+//
+//            self.floorCollectionView?.reloadData()
+//
+//            self.onUnitBlocked?(unitId)
+//
+//
+////            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+////                
+////                self.navigationController?.popViewController(animated: true)
+////                
+////            }
+//        }
+        
         detailsVC.onUnitBlocked = { [weak self] unitId in
-
             guard let self = self else { return }
+
+            // Mark that one unit has already been blocked for this EOI.
+            self.isUnitAlreadyBlocked = true
 
             if let index = GlobalData.allInventoryProjects.firstIndex(where: {
                 $0.id == unitId
@@ -587,19 +617,10 @@ extension InventroyDetailsVC: UICollectionViewDataSource, UICollectionViewDelega
             }
 
             self.updateUI()
-
             self.rebuildFloorSections()
-
             self.floorCollectionView?.reloadData()
 
             self.onUnitBlocked?(unitId)
-
-
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-//                
-//                self.navigationController?.popViewController(animated: true)
-//                
-//            }
         }
 
         present(detailsVC, animated: false)
@@ -684,6 +705,7 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
     var projectWebServices = ProjectWebServices()
     var oppId: String = EMPTY
     var onUnitBlocked: ((String) -> Void)?
+    var isUnitAlreadyBlocked: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -769,6 +791,15 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
 //            buttonStackView.addArrangedSubview(blockButton)
 //        }
         
+//        let status = unitDetails?.unitStatus?.lowercased() ?? ""
+//
+//        let isAvailableUnit =
+//            status == "available" || status == "released"
+//
+//        if isComingFromEOI && isAvailableUnit {
+//            buttonStackView.addArrangedSubview(blockButton)
+//        }
+        
         let status = unitDetails?.unitStatus?.lowercased() ?? ""
 
         let isAvailableUnit =
@@ -776,6 +807,10 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
 
         if isComingFromEOI && isAvailableUnit {
             buttonStackView.addArrangedSubview(blockButton)
+
+            // Disable blocking if a unit is already blocked for this EOI.
+            blockButton.isEnabled = !isUnitAlreadyBlocked
+            blockButton.alpha = isUnitAlreadyBlocked ? 0.5 : 1.0
         }
         
         bottomConstraint = sheetView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 420)
@@ -952,7 +987,11 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
     }
     
     private func performBlockUnit() {
+        guard blockButton.isEnabled else { return }
 
+           blockButton.isEnabled = false
+
+           blockButton.alpha = 0.5
         guard let unitId = unitDetails?.id,
               !oppId.isEmpty else {
 
@@ -977,7 +1016,7 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
             "RecordTypeId": Defaults.unsoldRecordTypeId ?? EMPTY,
             "Stage__c": "Payment Detail",
             "Hold_Counter__c": "1",
-            "OwnerId": "005ft0000001lBNAAY",
+            "OwnerId": Defaults.userId ?? EMPTY,
             "Inventory_Status__c": "Hold",
             "Unit_Hold_Date_Time__c": currentDateTime,
             "Unit__c": unitId

@@ -64,6 +64,10 @@ class CustomersVC: UIViewController {
     var summaryFilter: CustomerSummaryFilter?
     var selectedButton: UIButton?
     var isServerFilterApplied = false
+    private var isFilteredListActive = false
+
+    private var activeSOQLFilter: String?
+
     private let customerFields = """
     Id,
     Name,
@@ -110,8 +114,156 @@ class CustomersVC: UIViewController {
         getCustomer()
     }
     
-        
+    func getCustomer() {
+
+        guard InternetConnectionManager.isConnectedToNetwork() else {
+            isLoading = false
+            spinner.stopAnimating()
+            showEmptyState(.noInternet)
+            return
+        }
+
+        guard !isLoading else { return }
+        guard !isFilteredListActive else { return }
+
+        isLoading = true
+
+        if pageNumber == 1 {
+            hideEmptyState()
+        }
+
+        let requestedPage = pageNumber
+
+        let filterToUse: CustomerSummaryFilter? =
+            isServerFilterApplied ? nil : summaryFilter
+
+        Utility.getAllCustomerRecords(
+            pageNumber: requestedPage,
+            summaryFilter: filterToUse
+        ) { [weak self] success in
+
+            guard let self = self else { return }
+
+            DispatchQueue.main.async {
+
+                self.isLoading = false
+                self.spinner.stopAnimating()
+
+                guard success else {
+
+                    if self.pageNumber == requestedPage,
+                       requestedPage > 1 {
+                        self.pageNumber -= 1
+                    }
+
+                    if self.customerModelData.isEmpty {
+                        self.showEmptyState(.noResults)
+                    }
+
+                    return
+                }
+
+                // Utility accumulates all pages in GlobalData.allCustomerModel.
+                var seenIDs = Set<String>()
+
+                self.customerModelData =
+                    GlobalData.allCustomerModel.filter { customer in
+
+                        guard let id = customer.id else {
+                            return true
+                        }
+
+                        return seenIDs.insert(id).inserted
+                    }
+
+                self.applyCombinedFilters()
+            }
+        }
+    }
+    
 //    func getCustomer() {
+//        guard InternetConnectionManager.isConnectedToNetwork() else {
+//            isLoading = false
+//            spinner.stopAnimating()
+//            showEmptyState(.noInternet)
+//            return
+//        }
+//
+//        guard !isLoading else { return }
+//        guard !isFilteredListActive else { return }
+//
+//        // Set loading state only here
+//        isLoading = true
+//
+//        if pageNumber == 1 {
+//            hideEmptyState()
+//        }
+//
+//        let requestedPage = pageNumber
+//
+//        let filterToUse: CustomerSummaryFilter? =
+//            isServerFilterApplied ? nil : summaryFilter
+//
+//        print("Requesting customer page:", requestedPage)
+//
+//        Utility.getAllCustomerRecords(
+//            pageNumber: requestedPage,
+//            summaryFilter: filterToUse
+//        ) { [weak self] success in
+//
+//            guard let self = self else { return }
+//
+//            DispatchQueue.main.async {
+//
+//                self.isLoading = false
+//                self.spinner.stopAnimating()
+//
+//                guard success else {
+//
+//                    if self.pageNumber == requestedPage,
+//                       requestedPage > 1 {
+//                        self.pageNumber -= 1
+//                    }
+//
+//                    if self.customerModelData.isEmpty {
+//                        self.showEmptyState(.noResults)
+//                    }
+//
+//                    return
+//                }
+//
+//                let fetchedCustomers = GlobalData.allCustomerModel
+//
+//                if requestedPage == 1 {
+//                    self.customerModelData.removeAll()
+//                }
+//
+//                var existingIDs = Set(
+//                    self.customerModelData.compactMap { $0.id }
+//                )
+//
+//                for customer in fetchedCustomers {
+//
+//                    guard let customerID = customer.id else {
+//                        self.customerModelData.append(customer)
+//                        continue
+//                    }
+//
+//                    if existingIDs.insert(customerID).inserted {
+//                        self.customerModelData.append(customer)
+//                    }
+//                }
+//
+//                print("Requested page:", requestedPage)
+//                print("Records returned:", fetchedCustomers.count)
+//                print("Unique customers:", self.customerModelData.count)
+//
+//                self.applyCombinedFilters()
+//            }
+//        }
+//    }
+        
+//    func getFilteredCustomers(soql: String) {
 //
 //        if !InternetConnectionManager.isConnectedToNetwork() {
 //            showEmptyState(.noInternet)
@@ -120,17 +272,9 @@ class CustomersVC: UIViewController {
 //
 //        hideEmptyState()
 //
-//        let filterToUse: CustomerSummaryFilter?
-//
-//        if isServerFilterApplied {
-//            filterToUse = nil
-//        } else {
-//            filterToUse = summaryFilter
-//        }
-//
 //        Utility.getAllCustomerRecords(
-//            pageNumber: pageNumber,
-//            summaryFilter: filterToUse
+//            pageNumber: 1,
+//            soqlFilter: soql
 //        ) { success in
 //
 //            DispatchQueue.main.async {
@@ -156,77 +300,30 @@ class CustomersVC: UIViewController {
 //        }
 //    }
     
-    func getCustomer() {
-
-        guard InternetConnectionManager.isConnectedToNetwork() else {
-            isLoading = false
-            spinner.stopAnimating()
-            showEmptyState(.noInternet)
-            return
-        }
-
-        hideEmptyState()
-
-        let filterToUse: CustomerSummaryFilter?
-
-        if isServerFilterApplied {
-            filterToUse = nil
-        } else {
-            filterToUse = summaryFilter
-        }
-
-        Utility.getAllCustomerRecords(
-            pageNumber: pageNumber,
-            summaryFilter: filterToUse
-        ) { success in
-
-            DispatchQueue.main.async {
-
-                self.isLoading = false
-                self.spinner.stopAnimating()
-
-                guard success else {
-
-                    if self.pageNumber > 1 {
-                        self.pageNumber -= 1
-                    }
-
-                    if self.customerModelData.isEmpty {
-                        self.showEmptyState(.noResults)
-                    }
-
-                    return
-                }
-
-                if self.pageNumber == 1 {
-
-                    self.customerModelData = GlobalData.allCustomerModel
-
-                } else {
-
-                    self.customerModelData.append(
-                        contentsOf: GlobalData.allCustomerModel
-                    )
-                }
-
-                self.applyCombinedFilters()
-            }
-        }
-    }
-        
     func getFilteredCustomers(soql: String) {
 
-        if !InternetConnectionManager.isConnectedToNetwork() {
+        guard InternetConnectionManager.isConnectedToNetwork() else {
             showEmptyState(.noInternet)
             return
         }
 
+        // Cancel the previous pagination state.
+        pageNumber = 1
+        isLoading = true
+
+        activeSOQLFilter = soql
+        isFilteredListActive = true
+        isServerFilterApplied = true
+
         hideEmptyState()
+        spinner.startAnimating()
 
         Utility.getAllCustomerRecords(
             pageNumber: 1,
             soqlFilter: soql
-        ) { success in
+        ) { [weak self] success in
+
+            guard let self = self else { return }
 
             DispatchQueue.main.async {
 
@@ -234,19 +331,28 @@ class CustomersVC: UIViewController {
                 self.spinner.stopAnimating()
 
                 guard success else {
+                    self.customerModelData.removeAll()
+                    self.filteredRecord.removeAll()
                     self.showEmptyState(.noResults)
                     return
                 }
 
+                // The filtered request starts a new list.
                 self.customerModelData = GlobalData.allCustomerModel
-                self.filteredRecord = GlobalData.allCustomerModel
 
-                if self.filteredRecord.isEmpty {
-                    self.showEmptyState(.noResults)
-                } else {
-                    self.hideEmptyState()
-                    self.tbleview?.reloadData()
+                // Deduplicate the filtered result by Salesforce ID.
+                var seenIDs = Set<String>()
+
+                self.customerModelData = self.customerModelData.filter { customer in
+
+                    guard let id = customer.id else {
+                        return true
+                    }
+
+                    return seenIDs.insert(id).inserted
                 }
+
+                self.applyCombinedFilters()
             }
         }
     }
@@ -310,17 +416,39 @@ class CustomersVC: UIViewController {
         tbleview?.isHidden = false
     }
     
+//    func setUpUI() {
+//        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+//        tapGesture.cancelsTouchesInView = false
+//        view.addGestureRecognizer(tapGesture)
+//        tbleview?.keyboardDismissMode = .onDrag
+//        tbleview?.tableFooterView = createSpinnerFooter()
+//        searchVw?.delegate = self
+//        noDataFoundVw?.isHidden = true
+//        mainVw?.backgroundColor = ColorConstant.screensBackgroundColor
+//        addNewBtn?.layer.cornerRadius = 6
+//        
+//    }
+    
     func setUpUI() {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+
+        let tapGesture = UITapGestureRecognizer(
+            target: self,
+            action: #selector(dismissKeyboard)
+        )
+
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
+
+        tbleview?.delegate = self
+        tbleview?.dataSource = self
         tbleview?.keyboardDismissMode = .onDrag
         tbleview?.tableFooterView = createSpinnerFooter()
+
         searchVw?.delegate = self
+
         noDataFoundVw?.isHidden = true
         mainVw?.backgroundColor = ColorConstant.screensBackgroundColor
         addNewBtn?.layer.cornerRadius = 6
-        
     }
     
     
@@ -410,22 +538,78 @@ class CustomersVC: UIViewController {
         filtersView?.removeFromSuperview()
     }
     
+//    @IBAction func refreshAction(_ sender: UIButton) {
+//        pageNumber = 1
+//        if !InternetConnectionManager.isConnectedToNetwork() {
+//            
+//            showEmptyState(.noInternet)
+//            
+//            return
+//            
+//        }
+//        getCustomer()
+//    }
+    
     @IBAction func refreshAction(_ sender: UIButton) {
+
+        // Reset pagination and loading state.
         pageNumber = 1
-        if !InternetConnectionManager.isConnectedToNetwork() {
-            
-            showEmptyState(.noInternet)
-            
-            return
-            
+        isLoading = false
+
+        // Reset all active filters.
+        selectedFilter = .all
+        isServerFilterApplied = false
+        isFilteredListActive = false
+        activeSOQLFilter = nil
+        summaryFilter = nil
+
+        // Clear the search text.
+        currentSearchText = ""
+        searchVw?.text = ""
+
+        // Select the All button.
+        if let allButton = allBtn {
+            updateButtonSelection(allButton, filter: .all)
         }
+
+        // Clear the previous results.
+        customerModelData.removeAll()
+        filteredRecord.removeAll()
+        GlobalData.allCustomerModel.removeAll()
+
+        tbleview?.reloadData()
+        hideEmptyState()
+
+        guard InternetConnectionManager.isConnectedToNetwork() else {
+            showEmptyState(.noInternet)
+            return
+        }
+
+        // Reload all customers from page 1.
         getCustomer()
     }
     
+//    @IBAction func allBtnTapped(_ sender: UIButton) {
+//        updateButtonSelection(sender, filter: .all)
+//        pageNumber = 1
+//        isServerFilterApplied = false
+//
+//        getCustomer()
+//    }
+    
     @IBAction func allBtnTapped(_ sender: UIButton) {
+
         updateButtonSelection(sender, filter: .all)
+
         pageNumber = 1
+
         isServerFilterApplied = false
+        isFilteredListActive = false
+
+        activeSOQLFilter = nil
+
+        customerModelData.removeAll()
+        filteredRecord.removeAll()
 
         getCustomer()
     }
@@ -691,19 +875,54 @@ class CustomersVC: UIViewController {
     }
 }
 
+//extension CustomersVC: UIScrollViewDelegate {
+//    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+//        let offsetY = scrollView.contentOffset.y
+//        let contentHeight = scrollView.contentSize.height
+//        let frameHeight = scrollView.frame.size.height
+//        
+//        if offsetY > contentHeight - frameHeight - 50 {
+//            if !isLoading {
+//                pageNumber += 1
+//                isLoading = true
+//                spinner.startAnimating()
+//                getCustomer()
+//            }
+//        }
+//    }
+//}
+
 extension CustomersVC: UIScrollViewDelegate {
+
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+
+        // Only handle customer table scrolling
+        guard scrollView == tbleview else { return }
+
+        // Don't paginate while a custom filtered list is active
+        guard !isFilteredListActive else { return }
+
+        // Prevent multiple requests at the same time
+        guard !isLoading else { return }
+
         let offsetY = scrollView.contentOffset.y
         let contentHeight = scrollView.contentSize.height
-        let frameHeight = scrollView.frame.size.height
-        
-        if offsetY > contentHeight - frameHeight - 50 {
-            if !isLoading {
-                pageNumber += 1
-                isLoading = true
-                spinner.startAnimating()
-                getCustomer()
-            }
+        let frameHeight = scrollView.frame.height
+
+        // Make sure the table content is taller than its visible area
+        guard contentHeight > frameHeight else { return }
+
+        // Start loading before reaching the very bottom
+        if offsetY > contentHeight - frameHeight - 100 {
+
+            pageNumber += 1
+
+            print("Loading customer page:", pageNumber)
+
+            // Do NOT set isLoading = true here.
+            // getCustomer() sets it internally.
+            spinner.startAnimating()
+            getCustomer()
         }
     }
 }
@@ -768,34 +987,116 @@ extension CustomersVC: UISearchBarDelegate {
         searchBar.resignFirstResponder()
     }
     
+//    func applyCombinedFilters() {
+//
+//        let searchText = currentSearchText
+//            .trimmingCharacters(in: .whitespacesAndNewlines)
+//            .lowercased()
+//
+//        // When search is empty, reset the table to the original data
+//        guard !searchText.isEmpty else {
+//            filteredRecord = customerModelData
+//            hideEmptyState()
+//            tbleview?.reloadData()
+//            return
+//        }
+//
+//        // Apply search
+//        filteredRecord = customerModelData.filter {
+//            ($0.name?.lowercased().contains(searchText) ?? false) ||
+//            ($0.mobile?.lowercased().contains(searchText) ?? false) ||
+//            ($0.email?.lowercased().contains(searchText) ?? false) ||
+//            ($0.project?.name?.lowercased().contains(searchText) ?? false) ||
+//            ($0.createdBy?.name?.lowercased().contains(searchText) ?? false)
+//        }
+//
+//        if filteredRecord.isEmpty {
+//            showEmptyState(.noResults)
+//        } else {
+//            hideEmptyState()
+//            tbleview?.reloadData()
+//        }
+//    }
+    
     func applyCombinedFilters() {
 
+        var results = customerModelData
+
+        // Apply the selected local filter.
+        switch selectedFilter {
+
+        case .all:
+            break
+
+        case .eoiConverted:
+            results = results.filter {
+                $0.convertedToEOI == true
+            }
+
+        case .eoiNotConverted:
+            results = results.filter {
+                $0.convertedToEOI == false
+            }
+
+        case .recentlyViewed:
+            // Recently Viewed should come from its own server query.
+            break
+
+        case .thisMonth:
+            results = results.filter {
+
+                guard let dateString = $0.createdDate,
+                      let date = convertToDate(dateString) else {
+                    return false
+                }
+
+                return Calendar.current.isDate(
+                    date,
+                    equalTo: Date(),
+                    toGranularity: .month
+                )
+            }
+
+        case .today:
+            results = results.filter {
+
+                guard let dateString = $0.createdDate,
+                      let date = convertToDate(dateString) else {
+                    return false
+                }
+
+                return Calendar.current.isDateInToday(date)
+            }
+        }
+
+        // Apply search on top of the selected filter.
         let searchText = currentSearchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
 
-        // When search is empty, reset the table to the original data
-        guard !searchText.isEmpty else {
-            filteredRecord = customerModelData
-            hideEmptyState()
-            tbleview?.reloadData()
-            return
+        if !searchText.isEmpty {
+
+            results = results.filter {
+
+                ($0.name?.lowercased().contains(searchText) ?? false) ||
+                ($0.mobile?.lowercased().contains(searchText) ?? false) ||
+                ($0.email?.lowercased().contains(searchText) ?? false) ||
+                ($0.project?.name?.lowercased().contains(searchText) ?? false) ||
+                ($0.createdBy?.name?.lowercased().contains(searchText) ?? false)
+            }
         }
 
-        // Apply search
-        filteredRecord = customerModelData.filter {
-            ($0.name?.lowercased().contains(searchText) ?? false) ||
-            ($0.mobile?.lowercased().contains(searchText) ?? false) ||
-            ($0.email?.lowercased().contains(searchText) ?? false) ||
-            ($0.project?.name?.lowercased().contains(searchText) ?? false) ||
-            ($0.createdBy?.name?.lowercased().contains(searchText) ?? false)
-        }
+        filteredRecord = results
 
-        if filteredRecord.isEmpty {
-            showEmptyState(.noResults)
-        } else {
-            hideEmptyState()
-            tbleview?.reloadData()
+        DispatchQueue.main.async {
+
+            if self.filteredRecord.isEmpty {
+                self.showEmptyState(.noResults)
+            } else {
+                self.hideEmptyState()
+            }
+
+            self.tbleview?.reloadData()
         }
     }
 }

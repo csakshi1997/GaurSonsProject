@@ -177,6 +177,16 @@ class Defaults {
         }
     }
     
+    static var userAccountId: String? {
+        get {
+            return UserDefaults.standard.object(forKey: "UserAccountId") as? String ?? EMPTY
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "UserAccountId")
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
     static var savedCurrentDate: String? {
         get {
             return UserDefaults.standard.string(forKey: "savedCurrentDate")

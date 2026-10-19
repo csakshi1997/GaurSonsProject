@@ -201,6 +201,7 @@ class DetailVC: UIViewController {
         if isDataUpdated {
 //            isDataUpdated = false
             getEOI()
+            fetchPropertyData()
         }
     }
     
@@ -315,77 +316,171 @@ class DetailVC: UIViewController {
         }
     }
     
+//    func fetchAllFiles() {
+//        GlobalData.allContentDocModel.removeAll()
+//        DispatchQueue.main.async {
+//            self.loaderView?.startAnimating()
+//            self.fileTableView?.isHidden = true
+//            self.noDataFoundVw?.isHidden = true
+//        }
+//        
+//        Utility.getAllContentDoc(oppId: EOiModelDict.id ?? EMPTY) { success in
+//            if success {
+//                let contentDocs = GlobalData.allContentDocModel
+//                DispatchQueue.main.async {
+//                    self.totalFileLbl?.text = "Files (\(contentDocs.count))"
+//                }
+//                guard contentDocs.count > 0 else {
+//                    DispatchQueue.main.async {
+//                        self.loaderView?.stopAnimating()
+////                        self.noDataFoundVw?.isHidden = false
+//                        self.fileTableView?.isHidden = true
+//                    }
+//                    return
+//                }
+//                
+//                var tempFileArray: [FileModel] = []
+//                let dispatchGroup = DispatchGroup()
+//                for content in contentDocs {
+//                    dispatchGroup.enter()
+//                    Utility.getVersionData(contentDocId: content.contentDocumentId ?? EMPTY) { versionSuccess in
+//                        if let versionId = GlobalData.allVersionDataModel.Id {
+//                            Utility.getFileData(contentVersionId: versionId) { fileData in
+//                                if let data = fileData {
+//                                    let fileName = "\(versionId).pdf"
+//                                    let fileModel = FileModel(fileName: fileName, fileData: data)
+//                                    tempFileArray.append(fileModel)
+//                                }
+//                                dispatchGroup.leave()
+//                            }
+//                        } else {
+//                            dispatchGroup.leave()
+//                        }
+//                    }
+//                }
+//                dispatchGroup.notify(queue: .main) {
+//                    self.loaderView?.stopAnimating()
+//                    self.fileArray = tempFileArray
+//                    self.totalFileLbl?.text = "Files (\(self.fileArray.count))"
+//
+//                        if self.selectedIndex < self.menuArr.count,
+//
+//                           self.menuArr[self.selectedIndex] == "Files" {
+//
+//                            self.manageScreen(index: self.selectedIndex)
+//
+//                        }
+////                    self.fileHeaderView?.isHidden = false
+////                    if self.fileArray.count > 0 {
+////                        self.noDataFoundVw?.isHidden = true
+////                        self.fileTableView?.isHidden = false
+////                        self.tableViewsHeader?.isHidden = false
+////                        self.fileTableView?.reloadData()
+////                    } else {
+////                        self.tableViewsHeader?.isHidden = true
+////                        self.noDataFoundVw?.isHidden = false
+////                        self.fileTableView?.isHidden = true
+////                    }
+//                }
+//            } else {
+//                DispatchQueue.main.async {
+//                    self.loaderView?.stopAnimating()
+////                    self.noDataFoundVw?.isHidden = false
+////                    self.fileTableView?.isHidden = true
+//                }
+//            }
+//        }
+//    }
+    
     func fetchAllFiles() {
         GlobalData.allContentDocModel.removeAll()
+
         DispatchQueue.main.async {
             self.loaderView?.startAnimating()
             self.fileTableView?.isHidden = true
             self.noDataFoundVw?.isHidden = true
         }
-        
-        Utility.getAllContentDoc(oppId: EOiModelDict.id ?? EMPTY) { success in
-            if success {
-                let contentDocs = GlobalData.allContentDocModel
-                DispatchQueue.main.async {
-                    self.totalFileLbl?.text = "Files (\(contentDocs.count))"
-                }
-                guard contentDocs.count > 0 else {
-                    DispatchQueue.main.async {
-                        self.loaderView?.stopAnimating()
-//                        self.noDataFoundVw?.isHidden = false
-                        self.fileTableView?.isHidden = true
+
+        Utility.getAllContentDoc(oppId: EOiModelDict.id ?? EMPTY) { [weak self] success in
+            guard let self = self else { return }
+
+            DispatchQueue.main.async {
+                guard success else {
+                    self.loaderView?.stopAnimating()
+                    self.fileArray.removeAll()
+                    self.totalFileLbl?.text = "Files (0)"
+                    self.fileTableView?.reloadData()
+
+                    if self.selectedIndex < self.menuArr.count,
+                       self.menuArr[self.selectedIndex] == "Files" {
+                        self.manageScreen(index: self.selectedIndex)
                     }
                     return
                 }
-                
+
+                let contentDocs = GlobalData.allContentDocModel
+
+                guard !contentDocs.isEmpty else {
+                    self.loaderView?.stopAnimating()
+                    self.fileArray.removeAll()
+                    self.totalFileLbl?.text = "Files (0)"
+
+                    if self.selectedIndex < self.menuArr.count,
+                       self.menuArr[self.selectedIndex] == "Files" {
+                        self.manageScreen(index: self.selectedIndex)
+                    }
+                    return
+                }
+
                 var tempFileArray: [FileModel] = []
                 let dispatchGroup = DispatchGroup()
-                for content in contentDocs {
+                let resultQueue = DispatchQueue(label: "com.gaursons.attachments")
+
+                for (index, content) in contentDocs.enumerated() {
                     dispatchGroup.enter()
-                    Utility.getVersionData(contentDocId: content.contentDocumentId ?? EMPTY) { versionSuccess in
-                        if let versionId = GlobalData.allVersionDataModel.Id {
-                            Utility.getFileData(contentVersionId: versionId) { fileData in
-                                if let data = fileData {
-                                    let fileName = "\(versionId).pdf"
-                                    let fileModel = FileModel(fileName: fileName, fileData: data)
+
+                    Utility.getVersionData(
+                        contentDocId: content.contentDocumentId ?? EMPTY
+                    ) { versionSuccess in
+
+                        guard versionSuccess,
+                              let versionId = GlobalData.allVersionDataModel.Id else {
+                            dispatchGroup.leave()
+                            return
+                        }
+
+                        Utility.getFileData(contentVersionId: versionId) { fileData in
+
+                            if let data = fileData {
+                                // Display Attachment 1, Attachment 2, etc.
+                                let fileName = "Attachment \(index + 1).pdf"
+
+                                let fileModel = FileModel(
+                                    fileName: fileName,
+                                    fileData: data
+                                )
+
+                                resultQueue.async {
                                     tempFileArray.append(fileModel)
+                                    dispatchGroup.leave()
                                 }
+                            } else {
                                 dispatchGroup.leave()
                             }
-                        } else {
-                            dispatchGroup.leave()
                         }
                     }
                 }
+
                 dispatchGroup.notify(queue: .main) {
                     self.loaderView?.stopAnimating()
+
                     self.fileArray = tempFileArray
                     self.totalFileLbl?.text = "Files (\(self.fileArray.count))"
 
-                        if self.selectedIndex < self.menuArr.count,
-
-                           self.menuArr[self.selectedIndex] == "Files" {
-
-                            self.manageScreen(index: self.selectedIndex)
-
-                        }
-//                    self.fileHeaderView?.isHidden = false
-//                    if self.fileArray.count > 0 {
-//                        self.noDataFoundVw?.isHidden = true
-//                        self.fileTableView?.isHidden = false
-//                        self.tableViewsHeader?.isHidden = false
-//                        self.fileTableView?.reloadData()
-//                    } else {
-//                        self.tableViewsHeader?.isHidden = true
-//                        self.noDataFoundVw?.isHidden = false
-//                        self.fileTableView?.isHidden = true
-//                    }
-                }
-            } else {
-                DispatchQueue.main.async {
-                    self.loaderView?.stopAnimating()
-//                    self.noDataFoundVw?.isHidden = false
-//                    self.fileTableView?.isHidden = true
+                    if self.selectedIndex < self.menuArr.count,
+                       self.menuArr[self.selectedIndex] == "Files" {
+                        self.manageScreen(index: self.selectedIndex)
+                    }
                 }
             }
         }
@@ -1498,7 +1593,7 @@ extension DetailVC: UITableViewDelegate, UITableViewDataSource {
             }
             let cell: FilelCell = tableView.dequeueReusableCell(withIdentifier: "FilelCell", for: indexPath) as! FilelCell
             let fileDict = self.fileArray[indexPath.row]
-            cell.fileNameLbl?.text = fileDict.fileName
+            cell.fileNameLbl?.text = "Attachment \(indexPath.row + 1)"
             cell.sizeLbl?.text = fileDict.fileSize
             cell.onPreviewTapped = { [weak self] in
                 self?.previewFile(at: indexPath.row)
@@ -1722,12 +1817,27 @@ extension DetailVC: UITableViewDelegate, UITableViewDataSource {
 //            self.navigationController?.present(detailsListVC, animated: true)
         }
         
+//        if tableView == propertyTableView {
+//            let propertArr = propertyArr[indexPath.row]
+//            let storyboardBundle = Bundle.main
+//            let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
+//            let detailsListVC = storyboard.instantiateViewController(withIdentifier: "PropertyDetailVc") as! PropertyDetailVc
+//            detailsListVC.propertyModel = propertArr
+//            self.navigationController?.present(detailsListVC, animated: true)
+//        }
         if tableView == propertyTableView {
             let propertArr = propertyArr[indexPath.row]
-            let storyboardBundle = Bundle.main
-            let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
-            let detailsListVC = storyboard.instantiateViewController(withIdentifier: "PropertyDetailVc") as! PropertyDetailVc
+
+            let storyboard = UIStoryboard(name: "EOI", bundle: Bundle.main)
+            let detailsListVC = storyboard.instantiateViewController(
+                withIdentifier: "PropertyDetailVc"
+            ) as! PropertyDetailVc
+
             detailsListVC.propertyModel = propertArr
+
+            detailsListVC.modalPresentationStyle = .overFullScreen
+            detailsListVC.modalTransitionStyle = .crossDissolve
+
             self.navigationController?.present(detailsListVC, animated: true)
         }
     }

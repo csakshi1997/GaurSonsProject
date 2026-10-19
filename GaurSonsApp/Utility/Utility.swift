@@ -114,7 +114,8 @@ class Utility {
 //    }
     
     static func gotoCustomers(
-        summaryFilter: CustomerSummaryFilter = .registered
+        summaryFilter: CustomerSummaryFilter = .registered,
+        count: String
     ) {
         let storyBoard = UIStoryboard(
             name: "Tabbar",
@@ -127,7 +128,6 @@ class Utility {
 
         tabbarView?.isFromCustomer = true
         tabbarView?.customerSummaryFilter = summaryFilter
-
         SceneDelegate.getSceneDelegate().navigationController =
             UINavigationController(
                 rootViewController: tabbarView ?? TabbarView()
@@ -432,6 +432,7 @@ class Utility {
             }
         })
     }
+
     
     static func handleSalesforceError(
         _ error: Error,
@@ -479,6 +480,88 @@ class Utility {
                 completion(error.localizedDescription, .error)
             }
         }
+    }
+    
+    static func handleSalesforceErrorForPayment(
+        _ error: Error,
+        completion: @escaping (String?, ResponseStatus) -> Void
+    ) {
+        var errorMessage: String?
+
+        // Extract the actual Salesforce SDK error.
+        if let restError = error as? RestClientError {
+            switch restError {
+            case let .apiFailed(response, underlyingError, _):
+
+                // First, try to extract the message from the underlying error.
+                // Extract the actual message from the underlying Salesforce error.
+                let underlyingNSError = underlyingError as NSError
+
+                if let message = underlyingNSError.userInfo["message"] as? String,
+                   !message.isEmpty {
+                    errorMessage = message
+                }
+
+                // If unavailable, inspect the response body.
+                if errorMessage == nil,
+                   let responseObject = response as? Data,
+                   let json = try? JSONSerialization.jsonObject(
+                       with: responseObject,
+                       options: []
+                   ) as? [String: Any],
+                   let message = json["message"] as? String {
+                    errorMessage = message
+                }
+
+            default:
+                break
+            }
+        }
+
+        // Fallback: inspect NSError details.
+        if errorMessage == nil {
+            let nsError = error as NSError
+
+            if let message = nsError.userInfo["message"] as? String,
+               !message.isEmpty {
+                errorMessage = message
+            }
+        }
+
+        // Clean the message for the UI.
+        let finalMessage: String
+
+        if let message = errorMessage, !message.isEmpty {
+            finalMessage = cleanSalesforceMessage(message)
+        } else {
+            print("Unable to extract Salesforce error:", error)
+            finalMessage = "Unable to create payment. Please try again."
+        }
+
+        DispatchQueue.main.async {
+            completion(finalMessage, .error)
+        }
+    }
+
+    private static func cleanSalesforceMessage(_ message: String) -> String {
+        let prefixes = [
+            "Internal Server Error : Error while creating Payment Details:",
+            "Internal Server Error:"
+        ]
+
+        var result = message.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        for prefix in prefixes where result.hasPrefix(prefix) {
+            result = String(result.dropFirst(prefix.count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        // Make approval-process errors easier for users to understand.
+        if result.contains("ALREADY_IN_PROCESS") {
+            return "This record is already in an approval process. You cannot create another payment while the approval process is in progress. Please contact your administrator for assistance."
+        }
+
+        return result
     }
     
     static func showAlert(message: String) {

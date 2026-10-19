@@ -1014,7 +1014,7 @@
 				CODE_SIGN_ENTITLEMENTS = GaurSonsApp/GaurSonsApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = 23A9S6YXY5;
 				INFOPLIST_FILE = GaurSonsApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1045,7 +1045,7 @@
 				CODE_SIGN_ENTITLEMENTS = GaurSonsApp/GaurSonsApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 29;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = 23A9S6YXY5;
 				INFOPLIST_FILE = GaurSonsApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

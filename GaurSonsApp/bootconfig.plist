@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 <!--    // ForUAT-->
-    <key>remoteAccessConsumerKey</key>
-    <string>3MVG9vuHjyLKuxlGo62GjTlPNo3sAt7GI0bhgzutp75PsRoTG5Hi7Eu7aKGLBsZOClC0A4dhDIQcNZ8ce3Prn</string>
-<!--     For Production-->
 <!--    <key>remoteAccessConsumerKey</key>-->
-<!--    <string>3MVG9bZIBBVRES4G8O7B8a0bEoO0zkkVMnS5xXldlpNzxeDxfn6olzh7nzmYVi3BFf_k5_3KHo7FBCvVVBEXx</string>-->
+<!--    <string>3MVG9vuHjyLKuxlGo62GjTlPNo3sAt7GI0bhgzutp75PsRoTG5Hi7Eu7aKGLBsZOClC0A4dhDIQcNZ8ce3Prn</string>-->
+<!--     For Production-->
+    <key>remoteAccessConsumerKey</key>
+    <string>3MVG9bZIBBVRES4G8O7B8a0bEoO0zkkVMnS5xXldlpNzxeDxfn6olzh7nzmYVi3BFf_k5_3KHo7FBCvVVBEXx</string>
     <key>oauthRedirectURI</key>
     <string>sfdc://success</string>
 	<key>oauthScopes</key>

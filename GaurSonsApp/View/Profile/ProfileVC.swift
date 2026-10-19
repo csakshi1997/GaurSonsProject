@@ -91,6 +91,7 @@ class ProfileVC: UIViewController, UIDocumentInteractionControllerDelegate {
         Utility.getAllAccountDetails { success in
             if success {
                 self.accountDetailModel = GlobalData.allAccountDetailModel
+                print(self.accountDetailModel)
                 DispatchQueue.main.async {
                     self.initialUI()
                 }
@@ -114,68 +115,6 @@ class ProfileVC: UIViewController, UIDocumentInteractionControllerDelegate {
             view.addSubview(statusBarView)
         }
     }
-    
-//    func fetchAllFiles() {
-//        GlobalData.allContentDocModel.removeAll()
-//        DispatchQueue.main.async {
-//            self.loaderView?.startAnimating()
-//        }
-//        
-//        Utility.getAllContentDoc(oppId: accountDetailModel.id ?? EMPTY) { success in
-//            if success {
-//                let contentDocs = GlobalData.allContentDocModel
-//                guard contentDocs.count > 0 else {
-//                    DispatchQueue.main.async {
-//                        self.loaderView?.stopAnimating()
-//                    }
-//                    return
-//                }
-//                
-//                var tempFileArray: [FileModel] = []
-//                let dispatchGroup = DispatchGroup()
-//                
-//                for content in contentDocs {
-//                    dispatchGroup.enter()
-//                    Utility.getVersionData(contentDocId: content.contentDocumentId ?? EMPTY) { versionSuccess in
-//                        if let versionId = GlobalData.allVersionDataModel.Id {
-//                            Utility.getFileData(contentVersionId: versionId) { fileData in
-//                                if let data = fileData {
-//                                    let fileName = "\(versionId).pdf"
-//                                    let fileModel = FileModel(fileName: fileName, fileData: data)
-//                                    tempFileArray.append(fileModel)
-//                                }
-//                                dispatchGroup.leave()
-//                            }
-//                        } else {
-//                            dispatchGroup.leave()
-//                        }
-//                    }
-//                }
-//                
-//                dispatchGroup.notify(queue: .main) {
-//                    self.loaderView?.stopAnimating()
-//                    
-//                    self.fileArray = tempFileArray
-////                    if self.fileArray.count > 0 {
-////                        self.noDataFoundVw?.isHidden = true
-////                        self.tableView?.isHidden = false
-////                        self.tableViewsHeader?.isHidden = false
-////                        self.tableView?.reloadData()
-////                    } else {
-////                        self.tableViewsHeader?.isHidden = true
-////                        self.noDataFoundVw?.isHidden = false
-////                        self.tableView?.isHidden = true
-////                    }
-//                }
-//            } else {
-//                DispatchQueue.main.async {
-//                    self.loaderView?.stopAnimating()
-//                   
-//                }
-//            }
-//        }
-//    }
-    
     
     func fetchAllFiles() {
         
@@ -504,10 +443,6 @@ class ProfileVC: UIViewController, UIDocumentInteractionControllerDelegate {
         RERAValidUptoLbl?.text = Helper.displayValue(
             accountDetailModel.account?.reraValidUpto
         )
-        
-        // Documents
-        // Buttons are handled by fetchAllFiles()
-        
         self.fetchAllFiles()
     }
     

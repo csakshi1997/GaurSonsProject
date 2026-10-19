@@ -128,6 +128,7 @@ class CreateRequestWebService {
                 }
 
             } catch let error as RestClientError {
+                print(error)
                 if case .apiFailed(_, let underlying, _) = error,
                    let underlying = underlying as NSError?,
                    let errors = underlying.userInfo["error"] as? [[String: Any]],
@@ -137,6 +138,7 @@ class CreateRequestWebService {
                         print(message)
                         outerClosure(message, nil, .error)
                     }
+                    
                 } else {
                     DispatchQueue.main.async {
                         print(error.localizedDescription)
@@ -151,8 +153,6 @@ class CreateRequestWebService {
             }
         }
     }
-    
-    
     
     func queryRecordsAsync(soqlQuery: String) async throws -> [String: Any] {
         let request = RestClient.shared.request(forQuery: soqlQuery, apiVersion: nil)

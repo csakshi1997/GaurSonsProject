@@ -310,13 +310,7 @@ extension BookedCustomerVC: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        let EOIDict = filteredRecord[indexPath.row]
-//        let storyboardBundle = Bundle.main
-//        let storyboard = UIStoryboard(name: "Inventory", bundle: storyboardBundle)
-//        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "InventroyDetailsVC") as! InventroyDetailsVC
-//        detailsListVC.inventoryProjectDetailsDict = EOIDict
-//        detailsListVC.isComingFromEOIDetailScreen = false
-//        self.navigationController?.pushViewController(detailsListVC, animated: true)
+
     }
 }
 

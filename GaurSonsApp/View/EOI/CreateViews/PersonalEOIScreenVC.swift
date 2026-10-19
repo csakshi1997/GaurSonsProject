@@ -225,17 +225,9 @@ class PersonalEOIScreenVC: UIViewController {
             self.residentTypetxtFld?.text = self.applicantDetailsModel.residentType
             
             self.residentTypetxtFld?.isEnabled = false
-            if self.applicantDetailsModel.residentType == "Indian" {
-                self.passportNumbertxtFld?.isHidden = true
-                self.passportValiditytxtFld?.isHidden = true
-                self.panNotxtFld?.isHidden = false
-                
-            } else {
-                self.passportNumbertxtFld?.isHidden = false
-                self.passportValiditytxtFld?.isHidden = false
-                self.panNotxtFld?.isHidden = true
-                
-            }
+            self.UIUpdateAccordingToPaymentMode(
+                residentType: self.applicantDetailsModel.residentType ?? ""
+            )
             //            self.relationUploadImgView?.isHidden = true
             //            UIUpdateAccordingToPaymentMode(residentType: self.applicantDetailsModel.residentType ?? EMPTY)
             self.passportNumbertxtFld?.text = self.applicantDetailsModel.passportNumber
@@ -573,50 +565,164 @@ class PersonalEOIScreenVC: UIViewController {
         phoneNumberOthertxtFld?.translatesAutoresizingMaskIntoConstraints = false
     }
     
+//    func clearAllFields() {
+//        residentTypetxtFld?.text = ""
+//        panNotxtFld?.text = ""
+//        panUploadtxtFld?.text = ""
+//        passportNumbertxtFld?.text = ""
+//        passportValiditytxtFld?.text = ""
+//        DOBtxtFld?.text = ""
+//        maritalStatustxtFld?.text = ""
+//        applicantNametxtFld?.text = ""
+//        SDWtxtFld?.text = ""
+//        emailtxtFld?.text = ""
+//        mobiletxtFld?.text = ""
+//        gendertxtFld?.text = ""
+//        nationalitytxtFld?.text = ""
+//        occupationtxtFld?.text = ""
+//        phoneNumberHometxtFld?.text = ""
+//        phoneNumberWorktxtFld?.text = ""
+//        phoneNumberOthertxtFld?.text = ""
+//        residentTypetxtFld?.isEnabled = true
+//        panNotxtFld?.isEnabled = true
+//        panUploadtxtFld?.isEnabled = true
+//        passportNumbertxtFld?.isEnabled = true
+//        passportValiditytxtFld?.isEnabled = true
+//        DOBtxtFld?.isEnabled = true
+//        maritalStatustxtFld?.isEnabled = true
+//        applicantNametxtFld?.isEnabled = true
+//        SDWtxtFld?.isEnabled = true
+//        emailtxtFld?.isEnabled = true
+//        mobiletxtFld?.isEnabled = true
+//        gendertxtFld?.isEnabled = true
+//        nationalitytxtFld?.isEnabled = true
+//        occupationtxtFld?.isEnabled = true
+//        phoneNumberHometxtFld?.isEnabled = true
+//        phoneNumberWorktxtFld?.isEnabled = true
+//        phoneNumberOthertxtFld?.isEnabled = true
+//        salutationtxtFld?.text = ""
+//        applicantPhotoUploadtxtFld?.text = ""
+//        salutationForRelativetxtFld?.text = ""
+//        relativeNametxtFld?.text = ""
+//        salutationtxtFld?.isEnabled = true
+//        applicantPhotoUploadtxtFld?.isEnabled = true
+//        salutationForRelativetxtFld?.isEnabled = true
+//        relativeNametxtFld?.isEnabled = true
+//        
+//    }
+    
     func clearAllFields() {
-        residentTypetxtFld?.text = ""
-        panNotxtFld?.text = ""
-        panUploadtxtFld?.text = ""
-        passportNumbertxtFld?.text = ""
-        passportValiditytxtFld?.text = ""
-        DOBtxtFld?.text = ""
-        maritalStatustxtFld?.text = ""
-        applicantNametxtFld?.text = ""
-        SDWtxtFld?.text = ""
-        emailtxtFld?.text = ""
-        mobiletxtFld?.text = ""
-        gendertxtFld?.text = ""
-        nationalitytxtFld?.text = ""
-        occupationtxtFld?.text = ""
-        phoneNumberHometxtFld?.text = ""
-        phoneNumberWorktxtFld?.text = ""
-        phoneNumberOthertxtFld?.text = ""
-        residentTypetxtFld?.isEnabled = true
-        panNotxtFld?.isEnabled = true
-        panUploadtxtFld?.isEnabled = true
-        passportNumbertxtFld?.isEnabled = true
-        passportValiditytxtFld?.isEnabled = true
-        DOBtxtFld?.isEnabled = true
-        maritalStatustxtFld?.isEnabled = true
-        applicantNametxtFld?.isEnabled = true
-        SDWtxtFld?.isEnabled = true
-        emailtxtFld?.isEnabled = true
-        mobiletxtFld?.isEnabled = true
-        gendertxtFld?.isEnabled = true
-        nationalitytxtFld?.isEnabled = true
-        occupationtxtFld?.isEnabled = true
-        phoneNumberHometxtFld?.isEnabled = true
-        phoneNumberWorktxtFld?.isEnabled = true
-        phoneNumberOthertxtFld?.isEnabled = true
-        salutationtxtFld?.text = ""
-        applicantPhotoUploadtxtFld?.text = ""
-        salutationForRelativetxtFld?.text = ""
-        relativeNametxtFld?.text = ""
-        salutationtxtFld?.isEnabled = true
-        applicantPhotoUploadtxtFld?.isEnabled = true
-        salutationForRelativetxtFld?.isEnabled = true
-        relativeNametxtFld?.isEnabled = true
-        
+
+        // MARK: - Clear all text fields
+        let textFields: [MDCOutlinedTextField?] = [
+            residentTypetxtFld,
+            salutationtxtFld,
+            applicantPhotoUploadtxtFld,
+            salutationForRelativetxtFld,
+            relativeNametxtFld,
+            uploadAdhartxtFld,
+            passportNumbertxtFld,
+            passportValiditytxtFld,
+            passportUploadtxtFld,
+            panNotxtFld,
+            panUploadtxtFld,
+            DOBtxtFld,
+            maritalStatustxtFld,
+            applicantNametxtFld,
+            SDWtxtFld,
+            emailtxtFld,
+            mobiletxtFld,
+            gendertxtFld,
+            nationalitytxtFld,
+            occupationtxtFld,
+            phoneNumberHometxtFld,
+            phoneNumberWorktxtFld,
+            phoneNumberOthertxtFld
+        ]
+
+        textFields.forEach {
+            $0?.text = ""
+            $0?.isEnabled = true
+        }
+
+        // MARK: - Reset primary applicant selection
+        isPrimaryYES = false
+        isPrimaryNO = false
+
+        primaryYESBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+        primaryYESBtn?.setTitleColor(.black, for: .normal)
+
+        primaryNOBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+        primaryNOBtn?.setTitleColor(.black, for: .normal)
+
+        // MARK: - Reset customer details selection
+        isCustomerDetailsFillYES = false
+        isCustomerDetailsFillNO = false
+
+        customerDetailsYESBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+        customerDetailsYESBtn?.setTitleColor(.black, for: .normal)
+
+        customerDetailsNOBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+        customerDetailsNOBtn?.setTitleColor(.black, for: .normal)
+
+        // MARK: - Reset resident type
+        isIndianType = true
+        isResidentIndian = false
+
+        // MARK: - Reset Aadhaar verification
+        isVerifyViaDigiLocker = true
+        isVerifyViaUploadAdhar = false
+        isDoneVerifyViaDigiLocker = false
+        isDoneVerifyAadhaar = false
+        isAddharVerify = false
+
+        transactionId = nil
+        referenceId = nil
+        uploadedBase64 = nil
+        addharDetailsDict.removeAll()
+
+        verifyViaDigilockerBtn?.setImage(
+            UIImage(named: "RodioUnselected"),
+            for: .normal
+        )
+
+        uploadAadharBtn?.setImage(
+            UIImage(named: "RodioUnselected"),
+            for: .normal
+        )
+
+        verifyBtn?.setTitle("Verify", for: .normal)
+        verifyBtn?.backgroundColor = .white
+        verifyBtn?.setTitleColor(.black, for: .normal)
+        verifyBtn?.borderColor = UIColor(hex: "DFE1E0")
+        verifyBtn?.isEnabled = true
+
+        sendVerificationLinkBtn?.setTitle(
+            "Send Verification Link",
+            for: .normal
+        )
+//        sendVerificationLinkBtn?.backgroundColor = ColorConstant.systesm
+
+        // MARK: - Reset conditional fields
+        UIUpdateAccordingToPaymentMode(residentType: "")
+
+        // MARK: - Reset upload images
+        adhaarUploadImgView?.isHidden = true
+
+        // MARK: - Reset date pickers
+        dobDatePicker.date = Date()
+        passportValidityDatePicker.date = Date()
+
+        // MARK: - Reset customer details section
+        if isFromCustomers {
+            CustomerDetailsVwHeight?.constant = 75
+            CustomerDetailsVw?.isHidden = false
+        } else {
+            CustomerDetailsVwHeight?.constant = 0
+            CustomerDetailsVw?.isHidden = true
+        }
+
+        view.endEditing(true)
     }
     
     func forCustomerDetailsUI() {
@@ -781,25 +887,97 @@ class PersonalEOIScreenVC: UIViewController {
             primaryNOBtn?.setTitleColor(.white, for: .normal)
         }
     }
+        
+//    @IBAction func CustomerDetailsAction(_ sender: UIButton) {
+//        
+//        isCustomerDetailsFillNO = false
+//        isCustomerDetailsFillYES = false
+//        
+//        if sender.tag == 21 {
+//            
+//            // Customer Details: YES
+//            isCustomerDetailsFillYES = true
+//            
+//            customerDetailsYESBtn?.backgroundColor = UIColor(hex: "223B30")
+//            customerDetailsYESBtn?.setTitleColor(.white, for: .normal)
+//            customerDetailsNOBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+//            customerDetailsNOBtn?.setTitleColor(.black, for: .normal)
+//            
+//            forCustomerDetailsUI()
+//            
+//            // Update UI according to the selected resident type
+//            UIUpdateAccordingToPaymentMode(
+//                residentType: residentTypetxtFld?.text ?? ""
+//            )
+//            
+//        } else if sender.tag == 22 {
+//            
+//            // Customer Details: NO
+//            isCustomerDetailsFillNO = true
+//            
+//            customerDetailsYESBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+//            customerDetailsNOBtn?.setTitleColor(.white, for: .normal)
+//            customerDetailsNOBtn?.backgroundColor = UIColor(hex: "223B30")
+//            customerDetailsYESBtn?.setTitleColor(.black, for: .normal)
+//            
+//            clearAllFields()
+//            
+//            // Clear resident type state
+//            isIndianType = false
+//            isResidentIndian = false
+//            
+//            // Hide Aadhaar verification and PAN/passport fields
+//            UIUpdateAccordingToPaymentMode(residentType: "")
+//            
+//            chooseAadharVerificationMethodLblStack?.isHidden = true
+//            verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = true
+//            sendBtnsStack?.isHidden = true
+//        }
+//    }
     
     @IBAction func CustomerDetailsAction(_ sender: UIButton) {
-        isCustomerDetailsFillNO = false
-        isCustomerDetailsFillYES = false
+
         if sender.tag == 21 {
+
+            // Customer Details: YES
             isCustomerDetailsFillYES = true
+            isCustomerDetailsFillNO = false
+
             customerDetailsYESBtn?.backgroundColor = UIColor(hex: "223B30")
             customerDetailsYESBtn?.setTitleColor(.white, for: .normal)
+
             customerDetailsNOBtn?.backgroundColor = UIColor(hex: "DFE1E0")
             customerDetailsNOBtn?.setTitleColor(.black, for: .normal)
+
+            // Fill customer details without disabling Resident Type.
             forCustomerDetailsUI()
+
+            // Keep Resident Type selectable.
+            residentTypetxtFld?.isEnabled = true
+
         } else if sender.tag == 22 {
-            isCustomerDetailsFillNO = true
-            customerDetailsYESBtn?.backgroundColor = UIColor(hex: "DFE1E0")
-            customerDetailsNOBtn?.setTitleColor(.white, for: .normal)
-            customerDetailsNOBtn?.backgroundColor = UIColor(hex: "223B30")
-            customerDetailsYESBtn?.setTitleColor(.black, for: .normal)
+
+            // Customer Details: NO
             clearAllFields()
+
+            // Set selection AFTER clearAllFields(), because that method resets these flags.
+            isCustomerDetailsFillYES = false
+            isCustomerDetailsFillNO = true
+
+            customerDetailsYESBtn?.backgroundColor = UIColor(hex: "DFE1E0")
+            customerDetailsYESBtn?.setTitleColor(.black, for: .normal)
+
+            customerDetailsNOBtn?.backgroundColor = UIColor(hex: "223B30")
+            customerDetailsNOBtn?.setTitleColor(.white, for: .normal)
+
+            // Allow the user to select Resident Type.
+            residentTypetxtFld?.isEnabled = true
         }
+
+        // Reapply the UI rules after either selection.
+        UIUpdateAccordingToPaymentMode(
+            residentType: residentTypetxtFld?.text ?? ""
+        )
     }
     
     func decryptedValue(_ value: String?) -> String {
@@ -833,8 +1011,8 @@ class PersonalEOIScreenVC: UIViewController {
                 email = emailtxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             }
         } else {
-            mobileNumber = DecryptDataFile.decryptValue(applicantRecord?.maskedData?.mobile?.defaultValue) ?? EMPTY
-            email = DecryptDataFile.decryptValue(applicantRecord?.maskedData?.email?.defaultValue) ?? EMPTY
+            mobileNumber = mobiletxtFld?.text ?? EMPTY
+            email = emailtxtFld?.text ?? EMPTY
         }
         let passportNo = passportNumbertxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let passportValidity = passportValiditytxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -933,24 +1111,50 @@ class PersonalEOIScreenVC: UIViewController {
                 }
             }
         }
-        if isIndianType {
-            let panNumber = panNotxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            let panUpload = panUploadtxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !isOffline {
-                if panNumber.isEmpty {
-                    showAlert(with: "Validation Error", message: "Please enter PAN Number.")
-                    return false
-                } else if !validation.isValidPANNumber(panNumber) {
-                    showAlert(with: "Validation Error", message: "Please enter a valid PAN Number.")
-                    return false
-                }
-                if !isForEditing {
-                    
-                    if panUpload.isEmpty {
-                        showAlert(with: "Validation Error", message: "Please upload PAN document.")
-                        return false
-                    }
-                }
+//        if isIndianType {
+//            let panNumber = panNotxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+//            let panUpload = panUploadtxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+//            if !isOffline {
+//                if panNumber.isEmpty {
+//                    showAlert(with: "Validation Error", message: "Please enter PAN Number.")
+//                    return false
+//                } else if !validation.isValidPANNumber(panNumber) {
+//                    showAlert(with: "Validation Error", message: "Please enter a valid PAN Number.")
+//                    return false
+//                }
+//                if !isForEditing {
+//                    
+//                    if panUpload.isEmpty {
+//                        showAlert(with: "Validation Error", message: "Please upload PAN document.")
+//                        return false
+//                    }
+//                }
+//            }
+//        }
+        let residentType = residentTypetxtFld?.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        let isIndianResident = residentType.caseInsensitiveCompare("Indian") == .orderedSame
+
+        if isIndianResident && !isOffline {
+
+            let panNumber = panNotxtFld?.text?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+            let panUpload = panUploadtxtFld?.text?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+            if panNumber.isEmpty {
+                showAlert(with: "Validation Error", message: "Please enter PAN Number.")
+                return false
+            } else if !validation.isValidPANNumber(panNumber) {
+                showAlert(with: "Validation Error", message: "Please enter a valid PAN Number.")
+                return false
+            }
+
+            if !isForEditing && panUpload.isEmpty {
+                showAlert(with: "Validation Error", message: "Please upload PAN document.")
+                return false
             }
         }
         if salutation.isEmpty {
@@ -980,41 +1184,112 @@ class PersonalEOIScreenVC: UIViewController {
         }
         return true
     }
+        
+//    func UIUpdateAccordingToPaymentMode(residentType: String) {
+//        let resident = residentType.trimmingCharacters(in: .whitespacesAndNewlines)
+//        let isIndian = resident.caseInsensitiveCompare("Indian") == .orderedSame
+//        
+//        // Update resident type state
+//        isIndianType = isIndian
+//        isResidentIndian = isIndian
+//        
+//        // Hide all conditional fields initially
+//        passportNumbertxtFld?.isHidden = true
+//        passportValiditytxtFld?.isHidden = true
+//        passportUploadtxtFld?.isHidden = true
+//        passportValidityImgView?.isHidden = true
+//        passportUploadImgView?.isHidden = true
+//        
+//        panNotxtFld?.isHidden = true
+//        panUploadtxtFld?.isHidden = true
+//        panUploadImgView?.isHidden = true
+//        
+//        chooseAadharVerificationMethodLblStack?.isHidden = true
+//        verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = true
+//        sendBtnsStack?.isHidden = true
+//        
+//        // If resident type is empty, hide all related fields
+//        guard !resident.isEmpty else {
+//            return
+//        }
+//        
+//        // Indian resident
+//        if isIndian {
+//            
+//            if !isOffline {
+//                
+//                chooseAadharVerificationMethodLblStack?.isHidden = false
+//                verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = false
+//                sendBtnsStack?.isHidden = false
+//                
+//                panNotxtFld?.isHidden = false
+//                panUploadtxtFld?.isHidden = false
+//                panUploadImgView?.isHidden = false
+//            }
+//            
+//        } else {
+//            
+//            // NRI / non-Indian resident
+//            passportNumbertxtFld?.isHidden = false
+//            passportValiditytxtFld?.isHidden = false
+//            passportUploadtxtFld?.isHidden = false
+//            passportValidityImgView?.isHidden = false
+//            passportUploadImgView?.isHidden = false
+//        }
+//    }
     
     func UIUpdateAccordingToPaymentMode(residentType: String) {
+
+        let resident = residentType.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isIndian = resident.caseInsensitiveCompare("Indian") == .orderedSame
+
+        // Update resident type state.
+        isIndianType = isIndian
+        isResidentIndian = isIndian
+
+        // Hide conditional fields initially.
         passportNumbertxtFld?.isHidden = true
         passportValiditytxtFld?.isHidden = true
         passportUploadtxtFld?.isHidden = true
+        passportValidityImgView?.isHidden = true
+        passportUploadImgView?.isHidden = true
+
+        panNotxtFld?.isHidden = true
+        panUploadtxtFld?.isHidden = true
+        panUploadImgView?.isHidden = true
+
+        // Hide Aadhaar verification initially.
         chooseAadharVerificationMethodLblStack?.isHidden = true
         verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = true
         sendBtnsStack?.isHidden = true
-        panNotxtFld?.isHidden = true
-        panUploadtxtFld?.isHidden = true
-        passportNumbertxtFld?.isHidden = true
-        panUploadImgView?.isHidden = true
-        passportValidityImgView?.isHidden = true
-        passportUploadImgView?.isHidden = true
-        if residentType == "Indian" {
-            if isOffline {
-                chooseAadharVerificationMethodLblStack?.isHidden = true
-                verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = true
-                sendBtnsStack?.isHidden = true
-            } else {
+
+        // No resident type selected.
+        guard !resident.isEmpty else {
+            return
+        }
+
+        if isIndian {
+
+            // Indian resident: show PAN fields.
+            panNotxtFld?.isHidden = false
+            panUploadtxtFld?.isHidden = false
+            panUploadImgView?.isHidden = false
+
+            // Show Aadhaar verification only when Customer Details is NOT YES.
+            if !isCustomerDetailsFillYES && !isOffline && !isForEditing {
                 chooseAadharVerificationMethodLblStack?.isHidden = false
                 verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = false
                 sendBtnsStack?.isHidden = false
-                panNotxtFld?.isHidden = false
-                panUploadtxtFld?.isHidden = false
-                panUploadImgView?.isHidden = false
-                isResidentIndian = true
             }
+
         } else {
+
+            // Non-Indian resident: show passport fields.
             passportNumbertxtFld?.isHidden = false
             passportValiditytxtFld?.isHidden = false
             passportUploadtxtFld?.isHidden = false
             passportValidityImgView?.isHidden = false
             passportUploadImgView?.isHidden = false
-            isResidentIndian = false
         }
     }
     
@@ -1333,23 +1608,19 @@ class PersonalEOIScreenVC: UIViewController {
 
         guard validateRequiredFields() else { return false }
 
-        if !isForEditing && isResidentIndian {
-            if (!isDoneVerifyAadhaar && !isDoneVerifyViaDigiLocker) && isOffline {
-                showAlert(with: "Validation Error",
-                          message: "Please verify your Aadhaar before proceeding")
-                return false
-            }
-        }
-        if !isForEditing {
-            if isResidentIndian && !isDoneVerifyAadhaar && !isDoneVerifyViaDigiLocker {
+        if !isForEditing && !isCustomerDetailsFillYES && isResidentIndian {
+            
+            if !isDoneVerifyAadhaar && !isDoneVerifyViaDigiLocker {
+                
                 showAlert(
                     with: "Verification Required",
                     message: "Please verify your Aadhaar via DigiLocker or Aadhaar Upload before proceeding."
                 )
+                
                 return false
             }
         }
-
+        
         var applicant: SaveModel
 
         if let index = applicantIndex,
@@ -1401,6 +1672,26 @@ class PersonalEOIScreenVC: UIViewController {
 
         guard saveApplicantData() else { return }
 
+//        let storyboard = UIStoryboard(name: "EOI", bundle: Bundle.main)
+//
+//        if let addressVC = storyboard.instantiateViewController(
+//            withIdentifier: "AddressEOIScreenVC"
+//        ) as? AddressEOIScreenVC {
+//
+//            addressVC.applicantIndex = applicantIndex
+//            addressVC.isFromCustomers = isFromCustomers
+//            addressVC.isLocalEdit = isLocalEdit
+//            addressVC.cuatomerDetailsDict = cuatomerDetailsDict
+//            addressVC.addharDetailDict =  self.addharDetailsDict
+//            addressVC.isAddharVerify = self.isAddharVerify
+//
+//            if isForEditing {
+//                addressVC.isForEditing = isForEditing
+//                addressVC.applicantDetailsModel = applicantDetailsModel
+//            }
+//
+//            navigationController?.pushViewController(addressVC, animated: true)
+//        }
         let storyboard = UIStoryboard(name: "EOI", bundle: Bundle.main)
 
         if let addressVC = storyboard.instantiateViewController(
@@ -1411,15 +1702,21 @@ class PersonalEOIScreenVC: UIViewController {
             addressVC.isFromCustomers = isFromCustomers
             addressVC.isLocalEdit = isLocalEdit
             addressVC.cuatomerDetailsDict = cuatomerDetailsDict
-            addressVC.addharDetailDict =  self.addharDetailsDict
+            addressVC.addharDetailDict = self.addharDetailsDict
             addressVC.isAddharVerify = self.isAddharVerify
+
+            // Pass Customer Details YES selection
+            addressVC.isCustomerDetailsSelected = isCustomerDetailsFillYES
 
             if isForEditing {
                 addressVC.isForEditing = isForEditing
                 addressVC.applicantDetailsModel = applicantDetailsModel
             }
 
-            navigationController?.pushViewController(addressVC, animated: true)
+            navigationController?.pushViewController(
+                addressVC,
+                animated: true
+            )
         }
     }
 }
@@ -1732,27 +2029,51 @@ extension PersonalEOIScreenVC: UITextFieldDelegate {
         genderDropdown.show()
     }
     
+//    func showResidentTypeDropdown() {
+//        let options = FetchPicklistValue.shared.picklistOptionsDict["Resident_Type__c"] ?? []
+//        let accountLabel = options.map { $0.label }
+//        let accountValue = options.map { $0.value }
+//        
+//        print("ResidentType Labels: \(accountLabel)")
+//        print("ResidentTypeValues: \(accountValue)")
+//        
+//        residentTypeDropdown.anchorView = residentTypetxtFld
+//        residentTypeDropdown.dataSource = accountValue
+//        
+//        residentTypeDropdown.selectionAction = { [weak self] (index: Int, item: String) in
+//            guard index < accountLabel.count else { return }
+//            self?.residentTypetxtFld?.text = item
+//            if self?.residentTypetxtFld?.text == "Indian" {
+//                self?.isIndianType = true
+//            } else {
+//                self?.isIndianType = false
+//            }
+//            self?.UIUpdateAccordingToPaymentMode(residentType: item)
+//        }
+//        residentTypeDropdown.show()
+//    }
+    
     func showResidentTypeDropdown() {
-        let options = FetchPicklistValue.shared.picklistOptionsDict["Resident_Type__c"] ?? []
-        let accountLabel = options.map { $0.label }
+
+        let options = FetchPicklistValue.shared
+            .picklistOptionsDict["Resident_Type__c"] ?? []
+
         let accountValue = options.map { $0.value }
-        
-        print("ResidentType Labels: \(accountLabel)")
-        print("ResidentTypeValues: \(accountValue)")
-        
+
         residentTypeDropdown.anchorView = residentTypetxtFld
         residentTypeDropdown.dataSource = accountValue
-        
-        residentTypeDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-            guard index < accountLabel.count else { return }
-            self?.residentTypetxtFld?.text = item
-            if self?.residentTypetxtFld?.text == "Indian" {
-                self?.isIndianType = true
-            } else {
-                self?.isIndianType = false
-            }
-            self?.UIUpdateAccordingToPaymentMode(residentType: item)
+
+        residentTypeDropdown.selectionAction = { [weak self] _, item in
+
+            guard let self = self else { return }
+
+            // Update selected Resident Type.
+            self.residentTypetxtFld?.text = item
+
+            // Update PAN/passport fields and Aadhaar visibility.
+            self.UIUpdateAccordingToPaymentMode(residentType: item)
         }
+
         residentTypeDropdown.show()
     }
 }

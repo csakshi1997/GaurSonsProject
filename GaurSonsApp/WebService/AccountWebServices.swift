@@ -113,5 +113,91 @@ class AccountWebServices {
             }
         }
     }
+    
+    func getUserAccId(ApplicantId: String, outerClosure: @escaping ((String?, [String: Any]?, ResponseStatus) -> ())) {
+        Task {
+            let soqlQuery = """
+            SELECT Id, Name, Account.Id, Account.Channel_Partner_Status__c FROM USER WHERE Id = '\(Defaults.userId ?? "")'
+            """
+            
+            guard let encodedQuery = soqlQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                  let instanceUrl = Defaults.instanceUrl else {
+                outerClosure("Invalid query or instance URL", nil, .error)
+                return
+            }
+            
+            let fullUrl = "\(instanceUrl)/services/data/v63.0/query/?q=\(encodedQuery)"
+            print("Request URL: \(fullUrl)")
+            
+            let request = RestClient.shared.request(forQuery: soqlQuery, apiVersion: "v62.0")
+            
+            do {
+                let response = try await RestClient.shared.send(request: request)
+                if let urlResponse = response.urlResponse as? HTTPURLResponse {
+                    let statusCode = urlResponse.statusCode
+                    print("HTTP Status Code: \(statusCode)")
+                    
+                    if statusCode == 401 {
+                        DispatchQueue.main.async {
+                            Utility.logoutAction()
+                            outerClosure("Unauthorized. Redirecting to login.", nil, .tokenExpired)
+                        }
+                        return
+                    }
+                }
+                
+                if let jsonObject = try response.asJson() as? [String: Any] {
+                    DispatchQueue.main.async {
+                        outerClosure(nil, jsonObject, .success)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        outerClosure("Invalid JSON format", nil, .error)
+                    }
+                }
+                
+            } catch {
+                print("API Error:", error)
+
+                if let apiError = error as? RestClientError {
+                    
+                    if case let .apiFailed(response, _, urlResponse) = apiError {
+                        
+                        // 🔹 Check session expired
+                        if let httpResponse = urlResponse as? HTTPURLResponse,
+                           httpResponse.statusCode == 401 {
+                            
+                            DispatchQueue.main.async {
+                                Utility.logoutAction()
+                                outerClosure("Session expired. Please login again.", nil, .tokenExpired)
+                            }
+                            return
+                        }
+                        
+                        // 🔹 Parse Salesforce error
+                        if let data = response as? Data {
+                            do {
+                                if let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+                                   let firstError = json.first,
+                                   let message = firstError["message"] as? String {
+                                    
+                                    DispatchQueue.main.async {
+                                        outerClosure(message, nil, .error)
+                                    }
+                                    return
+                                }
+                            } catch {
+                                print("Error parsing Salesforce error")
+                            }
+                        }
+                    }
+                }
+
+                DispatchQueue.main.async {
+                    outerClosure(error.localizedDescription, nil, .error)
+                }
+            }
+        }
+    }
 }
     

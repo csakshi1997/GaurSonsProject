@@ -104,7 +104,7 @@ class SideBarVC: UIViewController {
     
     @IBAction func customerbtnTapped() {
         self.dismiss(animated: false)
-        Utility.gotoCustomers()
+        Utility.gotoCustomers(count: "8")
     }
     
     @IBAction func termbtnTapped() {

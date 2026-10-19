@@ -11,7 +11,7 @@ import QuickLook
 import DropDown
 import MaterialComponents.MaterialTextControls_OutlinedTextFields
 
-class CustomerDetailsVC: UIViewController {
+class CustomerDetailsVC: UIViewController, UITextViewDelegate {
     @IBOutlet var mainVw: UIView?
     @IBOutlet var topView: UIView?
     @IBOutlet var detailsBtn: UIButton?
@@ -125,67 +125,97 @@ class CustomerDetailsVC: UIViewController {
             Defaults.legacyRecordTypeId = id
         }
     }
-    
+        
     func setUP() {
+        print(cuatomerDetailsDict)
         applicantTypeTxtFld?.label.text = "Select Type"
         applicantTypeTxtFld?.setOutlineColor(.darkGray, for: .normal)
-        applicantTypeTxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
+        applicantTypeTxtFld?.setOutlineColor(
+            UIColor(hex: "223B30") ?? UIColor(),
+            for: .editing
+        )
         applicantTypeTxtFld?.translatesAutoresizingMaskIntoConstraints = false
         applicantTypeTxtFld?.delegate = self
         applicantTypeTxtFld?.inputView = UIView()
-        
+
         detailsBtnLbl?.backgroundColor = ColorConstant.primary
         filesBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
         mainVw?.backgroundColor = ColorConstant.screensBackgroundColor
         convertToEOIBtn?.layer.cornerRadius = 8
-//        detailsView?.borderWidth = 1
+
         aadharView?.borderWidth = 1
         addressView?.borderWidth = 1
         completeAddressView?.borderWidth = 1
         declarationView?.borderWidth = 1
+
         detailsView?.layer.cornerRadius = 8
         aadharView?.layer.cornerRadius = 8
         addressView?.layer.cornerRadius = 8
         completeAddressView?.layer.cornerRadius = 8
         declarationView?.layer.cornerRadius = 8
-//        detailsView?.borderColor = ColorConstant.buttonBorderLightColor
+
         aadharView?.borderColor = ColorConstant.buttonBorderLightColor
         addressView?.borderColor = ColorConstant.buttonBorderLightColor
         completeAddressView?.borderColor = ColorConstant.buttonBorderLightColor
         declarationView?.borderColor = ColorConstant.buttonBorderLightColor
-        self.tableViewsHeader?.isHidden = true
-        self.noDataFoundVw?.isHidden = true
-        self.fileTableView?.isHidden = true
-        self.fileHeaderView?.isHidden = true
-        
-        // populate Data
-        headerCustomerNameLbl?.text = cuatomerDetailsDict?.name
-        customerNameLbl?.text = cuatomerDetailsDict?.name
-        statusLbl?.text = cuatomerDetailsDict?.status
-        mobileLbl?.text = cuatomerDetailsDict?.mobile
-        emailLbl?.text = cuatomerDetailsDict?.email
-        projectLbl?.text = cuatomerDetailsDict?.project?.name
-        submissionTypeLbl?.text = cuatomerDetailsDict?.brokerType
-        verificationTypeLbl?.text = cuatomerDetailsDict?.verificationType
-        agentNameLbl?.text = cuatomerDetailsDict?.createdBy?.name
-        
-        aadhaarNameLbl?.text = cuatomerDetailsDict?.aadhaarName
-        aadhaarEndingLbl?.text = cuatomerDetailsDict?.aadhaarEnding
-        genderLbl?.text = cuatomerDetailsDict?.gender
-        dOBLbl?.text = cuatomerDetailsDict?.dateOfBirth
-        careOfLbl?.text = cuatomerDetailsDict?.careOf
-        
-        landmarkLbl?.text = cuatomerDetailsDict?.landmark
-        houseLbl?.text = cuatomerDetailsDict?.house
-        streetLbl?.text = cuatomerDetailsDict?.street
-        VTCLbl?.text = cuatomerDetailsDict?.vtc
-        districtbl?.text = cuatomerDetailsDict?.district
-        subDistrictLbl?.text = cuatomerDetailsDict?.subdist
-        postalCodeLbl?.text = cuatomerDetailsDict?.pincode
-        postOfficeLbl?.text = cuatomerDetailsDict?.postOffice
-        stateLbl?.text = cuatomerDetailsDict?.state
-        countryLbl?.text = cuatomerDetailsDict?.country
-        addressLbl?.text = "Complete Address\n\n \(cuatomerDetailsDict?.completeAddress ?? EMPTY)"
+
+        tableViewsHeader?.isHidden = true
+        noDataFoundVw?.isHidden = true
+        fileTableView?.isHidden = true
+        fileHeaderView?.isHidden = true
+
+        // MARK: - Customer Details
+
+        headerCustomerNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.name)
+        customerNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.name)
+        statusLbl?.text = Helper.displayValue(cuatomerDetailsDict?.status)
+        mobileLbl?.text = Helper.displayValue(cuatomerDetailsDict?.mobile)
+        emailLbl?.text = Helper.displayValue(cuatomerDetailsDict?.email)
+        projectLbl?.text = Helper.displayValue(cuatomerDetailsDict?.project?.name)
+        submissionTypeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.brokerType)
+        verificationTypeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.verificationType)
+        agentNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.createdBy?.name)
+
+        // MARK: - Aadhaar Details
+
+        aadhaarNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.aadhaarName)
+        aadhaarEndingLbl?.text = Helper.displayValue(cuatomerDetailsDict?.aadhaarEnding)
+        genderLbl?.text = Helper.displayValue(cuatomerDetailsDict?.gender)
+        dOBLbl?.text = Helper.displayValue(cuatomerDetailsDict?.dateOfBirth)
+        careOfLbl?.text = Helper.displayValue(cuatomerDetailsDict?.careOf)
+
+        // MARK: - Address Details
+
+        landmarkLbl?.text = Helper.displayValue(cuatomerDetailsDict?.landmark)
+        let house = cuatomerDetailsDict?.house?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let house = house,
+           !house.isEmpty,
+           house.caseInsensitiveCompare("<null>") != .orderedSame,
+           house.caseInsensitiveCompare("null") != .orderedSame {
+
+            houseLbl?.text = house
+        } else {
+            houseLbl?.text = "-"
+        }
+        streetLbl?.text = Helper.displayValue(cuatomerDetailsDict?.street)
+        VTCLbl?.text = Helper.displayValue(cuatomerDetailsDict?.vtc)
+        districtbl?.text = Helper.displayValue(cuatomerDetailsDict?.district)
+        subDistrictLbl?.text = Helper.displayValue(cuatomerDetailsDict?.subdist)
+        postalCodeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.pincode)
+        postOfficeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.postOffice)
+        stateLbl?.text = Helper.displayValue(cuatomerDetailsDict?.state)
+        countryLbl?.text = Helper.displayValue(cuatomerDetailsDict?.country)
+
+        addressLbl?.text = """
+        Complete Address
+
+        \(Helper.displayValue(cuatomerDetailsDict?.completeAddress))
+        """
+
+        // MARK: - Convert to EOI / Booking Form Button
+
         if cuatomerDetailsDict?.convertedToEOI ?? false {
             convertToEOIBtn?.setTitle("Converted", for: .normal)
             convertToEOIBtn?.backgroundColor = .gray
@@ -194,30 +224,251 @@ class CustomerDetailsVC: UIViewController {
             if cuatomerDetailsDict?.project?.channelPartnerVisible ?? false {
                 Defaults.isFromEOI = false
                 convertToEOIBtn?.setTitle("Booking Form", for: .normal)
-                convertToEOIBtn?.backgroundColor = UIColor(hex: "98C355")
-                convertToEOIBtn?.isEnabled = true
             } else {
-                convertToEOIBtn?.setTitle("EOI Form", for: .normal)
                 Defaults.isFromEOI = true
-                convertToEOIBtn?.backgroundColor = UIColor(hex: "98C355")
-                convertToEOIBtn?.isEnabled = true
+                convertToEOIBtn?.setTitle("EOI Form", for: .normal)
             }
+
+            convertToEOIBtn?.backgroundColor = UIColor(hex: "98C355")
+            convertToEOIBtn?.isEnabled = true
         }
+
         let declaration = cuatomerDetailsDict?.declaration?
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let declaration = declaration, !declaration.isEmpty {
-            declarationTextLbl?.text = declaration.htmlToPlainText
+        if let declaration = declaration,
+           !declaration.isEmpty,
+           declaration.caseInsensitiveCompare("<null>") != .orderedSame {
+
             declarationView?.isHidden = false
             declarationHeadingLbl?.isHidden = false
+            declarationTextLbl?.isHidden = false
+
+            let plainText = declaration.htmlToPlainText
+
+            // Find email addresses in the declaration.
+            let emailPattern = #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#
+
+            let attributedString = NSMutableAttributedString(
+                string: plainText,
+                attributes: [
+                    .font: declarationTextLbl?.font ?? UIFont.systemFont(ofSize: 14),
+                    .foregroundColor: declarationTextLbl?.textColor ?? UIColor.label
+                ]
+            )
+
+            if let regex = try? NSRegularExpression(
+                pattern: emailPattern,
+                options: [.caseInsensitive]
+            ) {
+                let range = NSRange(
+                    plainText.startIndex..<plainText.endIndex,
+                    in: plainText
+                )
+
+                let matches = regex.matches(
+                    in: plainText,
+                    range: range
+                )
+
+                for match in matches {
+                    guard let emailRange = Range(match.range, in: plainText) else {
+                        continue
+                    }
+
+                    let email = String(plainText[emailRange])
+
+                    attributedString.addAttributes(
+                        [
+                            .foregroundColor: UIColor.systemBlue,
+                            .underlineStyle: NSUnderlineStyle.single.rawValue
+                        ],
+                        range: match.range
+                    )
+
+                    print("Declaration email found: \(email)")
+                }
+            }
+
+            declarationTextLbl?.attributedText = attributedString
+            declarationTextLbl?.numberOfLines = 0
+            declarationTextLbl?.lineBreakMode = .byWordWrapping
+            declarationTextLbl?.isUserInteractionEnabled = true
+
+            // Add the tap gesture only once.
+            let hasTapGesture = declarationTextLbl?.gestureRecognizers?.contains {
+                $0.name == "DeclarationEmailTap"
+            } ?? false
+
+            if !hasTapGesture {
+                let tapGesture = UITapGestureRecognizer(
+                    target: self,
+                    action: #selector(handleDeclarationTap(_:))
+                )
+
+                tapGesture.name = "DeclarationEmailTap"
+                declarationTextLbl?.addGestureRecognizer(tapGesture)
+            }
+
         } else {
+            declarationTextLbl?.text = "-"
+            declarationTextLbl?.isHidden = true
             declarationView?.isHidden = true
             declarationHeadingLbl?.isHidden = true
         }
-        
-        maskedMobileLbl?.text = DecryptDataFile.decryptValue(cuatomerDetailsDict?.maskedData?.mobile?.defaultValue) ?? EMPTY
+        let decryptedMobile = DecryptDataFile.decryptValue(
+            cuatomerDetailsDict?.maskedData?.mobile?.defaultValue
+        )
 
-        maskedEmailLbl?.text = DecryptDataFile.decryptValue(cuatomerDetailsDict?.maskedData?.email?.defaultValue) ?? EMPTY
+        maskedMobileLbl?.text = Helper.displayValue(decryptedMobile)
+
+        let decryptedEmail = DecryptDataFile.decryptValue(
+            cuatomerDetailsDict?.maskedData?.email?.defaultValue
+        )
+
+        maskedEmailLbl?.text = Helper.displayValue(decryptedEmail)
+    }
+    
+    @objc private func handleDeclarationTap(_ gesture: UITapGestureRecognizer) {
+        guard let label = declarationTextLbl,
+              let attributedText = label.attributedText else {
+            return
+        }
+
+        let text = attributedText.string
+        let location = gesture.location(in: label)
+
+        // Configure TextKit to identify the tapped character.
+        let textStorage = NSTextStorage(attributedString: attributedText)
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(size: label.bounds.size)
+
+        textContainer.lineFragmentPadding = 0
+        textContainer.maximumNumberOfLines = label.numberOfLines
+        textContainer.lineBreakMode = label.lineBreakMode
+
+        layoutManager.addTextContainer(textContainer)
+        textStorage.addLayoutManager(layoutManager)
+
+        let textBounds = layoutManager.usedRect(for: textContainer)
+
+        let verticalOffset: CGFloat
+        switch label.textAlignment {
+        case .center:
+            verticalOffset = max(0, (label.bounds.height - textBounds.height) / 2)
+        default:
+            verticalOffset = 0
+        }
+
+        let horizontalOffset: CGFloat
+        switch label.textAlignment {
+        case .center:
+            horizontalOffset = max(0, (label.bounds.width - textBounds.width) / 2)
+        case .right:
+            horizontalOffset = max(0, label.bounds.width - textBounds.width)
+        default:
+            horizontalOffset = 0
+        }
+
+        let adjustedLocation = CGPoint(
+            x: location.x - horizontalOffset,
+            y: location.y - verticalOffset
+        )
+
+        // Ignore taps outside the displayed text.
+        guard adjustedLocation.x >= 0,
+              adjustedLocation.y >= 0,
+              adjustedLocation.x <= label.bounds.width,
+              adjustedLocation.y <= label.bounds.height else {
+            return
+        }
+
+        let characterIndex = layoutManager.characterIndex(
+            for: adjustedLocation,
+            in: textContainer,
+            fractionOfDistanceBetweenInsertionPoints: nil
+        )
+
+        guard characterIndex < textStorage.length else {
+            return
+        }
+
+        // First, check whether the tapped character has a mailto link.
+        if let link = attributedText.attribute(
+            .link,
+            at: characterIndex,
+            effectiveRange: nil
+        ) as? String,
+           let url = URL(string: link),
+           url.scheme?.lowercased() == "mailto" {
+
+            openEmailLink(url)
+            return
+        }
+
+        // Fallback: find an email address at the tapped character.
+        let emailPattern = #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#
+
+        guard let regex = try? NSRegularExpression(
+            pattern: emailPattern,
+            options: [.caseInsensitive]
+        ) else {
+            return
+        }
+
+        let fullRange = NSRange(
+            location: 0,
+            length: (text as NSString).length
+        )
+
+        for match in regex.matches(in: text, range: fullRange) {
+            guard NSLocationInRange(characterIndex, match.range) else {
+                continue
+            }
+
+            let email = (text as NSString).substring(with: match.range)
+
+            guard let encodedEmail = email.addingPercentEncoding(
+                withAllowedCharacters: .urlQueryAllowed
+            ) else {
+                return
+            }
+
+            guard let mailURL = URL(string: "mailto:\(encodedEmail)") else {
+                return
+            }
+
+            openEmailLink(mailURL)
+            return
+        }
+    }
+
+    private func openEmailLink(_ mailURL: URL) {
+        guard let email = URLComponents(url: mailURL, resolvingAgainstBaseURL: false)?
+            .path else {
+            UIApplication.shared.open(mailURL)
+            return
+        }
+
+        let encodedEmail = email.addingPercentEncoding(
+            withAllowedCharacters: .urlQueryAllowed
+        ) ?? email
+
+        // Prefer Gmail when installed.
+        if let gmailURL = URL(
+            string: "googlegmail://co?to=\(encodedEmail)"
+        ), UIApplication.shared.canOpenURL(gmailURL) {
+
+            UIApplication.shared.open(gmailURL) { success in
+                print("Gmail opened successfully: \(success)")
+            }
+
+        } else {
+            // Fallback to the default email app.
+            UIApplication.shared.open(mailURL) { success in
+                print("Default email app opened successfully: \(success)")
+            }
+        }
     }
     
     func setupAddEOIVIew() {
@@ -234,6 +485,7 @@ class CustomerDetailsVC: UIViewController {
             self.view.layoutIfNeeded()
         }
     }
+    
     
     @IBAction func crossAction(_ sender: UIButton) {
         dismissMaskedDataView()
@@ -391,74 +643,94 @@ class CustomerDetailsVC: UIViewController {
         
     }
     
-    
     func fetchAllFiles() {
         GlobalData.allContentDocModel.removeAll()
+
         DispatchQueue.main.async {
             self.loaderView?.startAnimating()
             self.fileTableView?.isHidden = true
-//            self.fileHeaderView?.isHidden = true
             self.noDataFoundVw?.isHidden = true
         }
-        
+
         Utility.getAllContentDoc(oppId: cuatomerDetailsDict?.id ?? EMPTY) { success in
-            if success {
-                let contentDocs = GlobalData.allContentDocModel
-                guard contentDocs.count > 0 else {
-                    DispatchQueue.main.async {
-                        self.loaderView?.stopAnimating()
-                        self.noDataFoundVw?.isHidden = false
-                        self.fileTableView?.isHidden = true
-//                        self.fileHeaderView?.isHidden = true
-                    }
-                    return
-                }
-                
-                var tempFileArray: [FileModel] = []
-                let dispatchGroup = DispatchGroup()
-                
-                for content in contentDocs {
-                    dispatchGroup.enter()
-                    Utility.getVersionData(contentDocId: content.contentDocumentId ?? EMPTY) { versionSuccess in
-                        if let versionId = GlobalData.allVersionDataModel.Id {
-                            Utility.getFileData(contentVersionId: versionId) { fileData in
-                                if let data = fileData {
-                                    let fileName = "\(versionId).pdf"
-                                    let fileModel = FileModel(fileName: fileName, fileData: data)
-                                    tempFileArray.append(fileModel)
-                                }
-                                dispatchGroup.leave()
-                            }
-                        } else {
-                            dispatchGroup.leave()
-                        }
-                    }
-                }
-                
-                dispatchGroup.notify(queue: .main) {
-                    self.loaderView?.stopAnimating()
-                    
-                    self.fileArray = tempFileArray
-                    self.fileHeaderView?.isHidden = false
-                    if self.fileArray.count > 0 {
-                        self.noDataFoundVw?.isHidden = true
-                        self.fileTableView?.isHidden = false
-                        self.tableViewsHeader?.isHidden = false
-                        self.fileTableView?.reloadData()
-                    } else {
-                        self.tableViewsHeader?.isHidden = true
-                        self.noDataFoundVw?.isHidden = false
-                        self.fileTableView?.isHidden = true
-//                        self.fileHeaderView?.isHidden = true
-                    }
-                }
-            } else {
+
+            guard success else {
                 DispatchQueue.main.async {
                     self.loaderView?.stopAnimating()
                     self.noDataFoundVw?.isHidden = false
                     self.fileTableView?.isHidden = true
-//                    self.fileHeaderView?.isH idden = true
                 }
+                return
+            }
+
+            let contentDocs = GlobalData.allContentDocModel
+
+            guard !contentDocs.isEmpty else {
+                DispatchQueue.main.async {
+                    self.loaderView?.stopAnimating()
+                    self.noDataFoundVw?.isHidden = false
+                    self.fileTableView?.isHidden = true
+                }
+                return
+            }
+
+            let dispatchGroup = DispatchGroup()
+            let resultQueue = DispatchQueue(label: "com.gaursons.attachments")
+            var tempFileArray: [(index: Int, file: FileModel)] = []
+
+            for (index, content) in contentDocs.enumerated() {
+                dispatchGroup.enter()
+
+                Utility.getVersionData(
+                    contentDocId: content.contentDocumentId ?? EMPTY
+                ) { versionSuccess in
+
+                    guard versionSuccess,
+                          let versionId = GlobalData.allVersionDataModel.Id else {
+                        dispatchGroup.leave()
+                        return
+                    }
+
+                    Utility.getFileData(contentVersionId: versionId) { fileData in
+
+                        if let data = fileData {
+                            // Keep the real filename for previewing.
+                            // Keep the file extension for QuickLook preview.
+                            let actualFileName = "\(versionId).pdf"
+
+                            let fileModel = FileModel(
+                                fileName: actualFileName,
+                                fileData: data
+                            )
+                            resultQueue.sync {
+                                tempFileArray.append((index: index, file: fileModel))
+                            }
+                        }
+
+                        dispatchGroup.leave()
+                    }
+                }
+            }
+
+            dispatchGroup.notify(queue: .main) {
+                self.loaderView?.stopAnimating()
+
+                // Preserve the original attachment order.
+                self.fileArray = tempFileArray
+                    .sorted { $0.index < $1.index }
+                    .map { $0.file }
+
+                guard self.isFilesEnable else { return }
+
+                self.fileHeaderView?.isHidden = false
+
+                let hasFiles = !self.fileArray.isEmpty
+                self.noDataFoundVw?.isHidden = hasFiles
+                self.fileTableView?.isHidden = !hasFiles
+                self.tableViewsHeader?.isHidden = !hasFiles
+
+                self.fileTableView?.reloadData()
+                self.view.layoutIfNeeded()
             }
         }
     }
@@ -488,121 +760,42 @@ class CustomerDetailsVC: UIViewController {
         print("Upload button tapped")
         showUploadOptions(sourceField: "File")
     }
-    
-//    @IBAction func applicantTypeTapped(_ sender: UIButton) {
-//        if sender == applicantTypeIndividual {
-//            isIndividualEnable.toggle()
-//            isCompanyEnable = false
-//            isPartnershipEnable = false
-//            isProprietorshipEnable = false
-//        } else if sender == applicantTypeCompany {
-//            isCompanyEnable.toggle()
-//            isIndividualEnable = false
-//            isPartnershipEnable = false
-//            isProprietorshipEnable = false
-//        } else if sender == applicantTypePartnership {
-//            isPartnershipEnable.toggle()
-//            isIndividualEnable = false
-//            isCompanyEnable = false
-//            isProprietorshipEnable = false
-//        } else if sender == applicantTypeProprietorship {
-//            isProprietorshipEnable.toggle()
-//            isIndividualEnable = false
-//            isCompanyEnable = false
-//            isPartnershipEnable = false
-//        }
-//
-//        [applicantTypeIndividual, applicantTypeCompany, applicantTypePartnership, applicantTypeProprietorship].forEach { btn in
-//            btn?.backgroundColor = .white
-//            btn?.setTitleColor(.black, for: .normal)
-//        }
-//
-//        if isIndividualEnable {
-//            Defaults.type = "Individual"
-//            applicantTypeIndividual?.backgroundColor = UIColor(hex: "223B30")
-//            applicantTypeIndividual?.setTitleColor(.white, for: .normal)
-//        }
-//        if isCompanyEnable { applicantTypeCompany?.backgroundColor = UIColor(hex: "223B30")
-//            Defaults.type = "Company"
-//            applicantTypeCompany?.setTitleColor(.white, for: .normal)
-//        }
-//        if isPartnershipEnable { applicantTypePartnership?.backgroundColor = UIColor(hex: "223B30")
-//            Defaults.type = "Partnership"
-//            applicantTypePartnership?.setTitleColor(.white, for: .normal)
-//        }
-//        if isProprietorshipEnable { applicantTypeProprietorship?.backgroundColor = UIColor(hex: "223B30")
-//            Defaults.type = "Proprietorship"
-//            applicantTypeProprietorship?.setTitleColor(.white, for: .normal)
-//        }
-//        checkProceedEligibility()
-//    }
-    
-//    func resetEOISelection() {
-//        isOfflineYesEnable = false
-//        isOfflineNoEnable = false
-//        
-//        [isOfflineEOIYES, isOfflineEOINO].forEach { btn in
-//            btn?.backgroundColor = .white
-//            btn?.setTitleColor(.black, for: .normal)
-//        }
-//        
-//        isProprietorshipEnable = false
-//        isIndividualEnable = false
-//        isCompanyEnable = false
-//        isPartnershipEnable = false
-//        
-//        [applicantTypeIndividual, applicantTypeCompany, applicantTypePartnership, applicantTypeProprietorship].forEach { btn in
-//            btn?.backgroundColor = .white
-//            btn?.setTitleColor(.black, for: .normal)
-//        }
-//    }
-    
-//    @IBAction func eoiOptionTapped(_ sender: UIButton) {
-//        if sender == isOfflineEOIYES {
-//            isOfflineYesEnable.toggle()
-//            isOfflineNoEnable = false
-//        } else if sender == isOfflineEOINO {
-//            isOfflineNoEnable.toggle()
-//            isOfflineYesEnable = false
-//        }
-//        
-//        [isOfflineEOIYES, isOfflineEOINO].forEach { btn in
-//            btn?.backgroundColor = .white
-//            btn?.setTitleColor(.black, for: .normal)
-//        }
-//        
-//        if isOfflineYesEnable {
-//            isOfflineEOIYES?.backgroundColor = UIColor(hex: "223B30")
-//            isOfflineEOIYES?.setTitleColor(.white, for: .normal)
-//        }
-//        if isOfflineNoEnable {
-//            isOfflineEOINO?.backgroundColor = UIColor(hex: "223B30")
-//            isOfflineEOINO?.setTitleColor(.white, for: .normal)
-//        }
-//        
-//        checkProceedEligibility()
-//    }
-    
+        
     @IBAction func uiBtnsAction(_ sender: UIButton) {
-        detailsBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
-        filesBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
-        detailsScrollView?.isHidden = true
-        fileHeaderView?.isHidden = true
-        fileTableView?.isHidden = true
-        tableViewsHeader?.isHidden = true
+        let isDetailsSelected = sender.tag == 11
+
+        // Update selected tab state
+        isDetailsEnable = isDetailsSelected
+        isFilesEnable = !isDetailsSelected
+
+        // Details tab
+        detailsBtnLbl?.backgroundColor = isDetailsSelected
+            ? ColorConstant.primary
+            : ColorConstant.buttonBackgroundWhiteColor
+
+        // Files tab
+        filesBtnLbl?.backgroundColor = isDetailsSelected
+            ? ColorConstant.buttonBackgroundWhiteColor
+            : ColorConstant.primary
+
+        // Show only the selected tab's content
+        detailsScrollView?.isHidden = !isDetailsSelected
+
+        fileHeaderView?.isHidden = isDetailsSelected
+        fileTableView?.isHidden = isDetailsSelected
+        tableViewsHeader?.isHidden = isDetailsSelected
         noDataFoundVw?.isHidden = true
-        isDetailsEnable = false
-        isFilesEnable = false
-        if sender.tag == 11 {
-            isDetailsEnable = true
-            detailsBtnLbl?.backgroundColor = ColorConstant.primary
+
+        if isDetailsSelected {
+            // Show Details only
             detailsScrollView?.isHidden = false
-        } else if sender.tag == 14 {
-            isFilesEnable = true
+        } else {
+            // Show Files only
             fileHeaderView?.isHidden = false
-            filesBtnLbl?.backgroundColor = ColorConstant.primary
             fetchAllFiles()
         }
+
+        view.layoutIfNeeded()
     }
     
     @IBAction func convertToEOIAction() {
@@ -644,7 +837,6 @@ class CustomerDetailsVC: UIViewController {
     }
     
     func showMaskedDataView() {
-
         guard let maskedDataView = maskedDataView else { return }
         guard let window = UIApplication.shared.keyWindow else { return }
 
@@ -662,26 +854,19 @@ class CustomerDetailsVC: UIViewController {
 
         maskedDataView.alpha = 0
         maskedDataInternalView?.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-
         UIView.animate(withDuration: 0.3) {
-
             maskedDataView.alpha = 1
             self.maskedDataInternalView?.transform = .identity
         }
-
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissMaskedDataView))
         maskedDataView.addGestureRecognizer(tapGesture)
     }
 
     @objc func dismissMaskedDataView() {
-
         UIView.animate(withDuration: 0.3, animations: {
-
             self.maskedDataInternalView?.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
             self.maskedDataView?.alpha = 0
-
         }) { _ in
-
             self.maskedDataView?.removeFromSuperview()
             self.maskedDataInternalView?.transform = .identity
         }
@@ -732,7 +917,8 @@ extension CustomerDetailsVC: UITableViewDelegate, UITableViewDataSource {
             }
             let cell: FilelCell = tableView.dequeueReusableCell(withIdentifier: "FilelCell", for: indexPath) as! FilelCell
             let fileDict = self.fileArray[indexPath.row]
-            cell.fileNameLbl?.text = fileDict.fileName
+//            cell.fileNameLbl?.text = fileDict.fileName
+            cell.fileNameLbl?.text = "Attachment \(indexPath.row + 1)"
             cell.sizeLbl?.text = fileDict.fileSize
             cell.onPreviewTapped = { [weak self] in
                 self?.previewFile(at: indexPath.row)
@@ -886,8 +1072,19 @@ extension CustomerDetailsVC: UIImagePickerControllerDelegate, UINavigationContro
         }
         
         let base64Data = convertAttachmentToBase64(attachment) ?? ""
+//        let contentVersionBody: [String: Any] = [
+//            "Title": attachment.fileName,
+//            "PathOnClient": attachment.fileName,
+//            "NetworkId": Defaults.networkId ?? "",
+//            "VersionData": base64Data
+//        ]
+        
+        let fileNameWithoutExtension = (
+            attachment.fileName as NSString
+        ).deletingPathExtension
+
         let contentVersionBody: [String: Any] = [
-            "Title": attachment.fileName,
+            "Title": fileNameWithoutExtension,
             "PathOnClient": attachment.fileName,
             "NetworkId": Defaults.networkId ?? "",
             "VersionData": base64Data

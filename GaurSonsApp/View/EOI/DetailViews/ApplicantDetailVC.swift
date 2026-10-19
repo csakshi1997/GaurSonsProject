@@ -888,7 +888,7 @@ extension ApplicantDetailVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell: ApplicantDetailCell = tableView.dequeueReusableCell(withIdentifier: "ApplicantDetailCell", for: indexPath) as! ApplicantDetailCell
         let fileDict = self.fileArray[indexPath.row]
-        cell.fileNameLbl?.text = fileDict.fileName
+        cell.fileNameLbl?.text = "Attachment \(indexPath.row + 1)"
         cell.sizeLbl?.text = fileDict.fileSize
         cell.onPreviewTapped = {
             self.previewFile(at: indexPath.row)

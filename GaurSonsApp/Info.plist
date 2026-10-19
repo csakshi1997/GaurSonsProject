@@ -34,6 +34,10 @@
 	<string>This app needs access to save QR images</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to save QR codes</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>googlegmail</string>
+    </array>
 	<key>SFDCOAuthLoginHost</key>
 	<string>$(LOGIN_HOST)</string>
 	<key>UIApplicationSceneManifest</key>

@@ -177,7 +177,7 @@ struct ApplicantRecord {
         var email: MaskedField?
 
         init(dict: [String: Any]) {
-
+print(dict)
             if let mobileDict = dict["Mobile"] as? [String: Any] {
                 self.mobile = MaskedField(dict: mobileDict)
             }
@@ -254,7 +254,10 @@ struct ApplicantRecord {
 
             do {
                 if let maskedDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    print(maskedDict)
                     self.maskedData = MaskedData(dict: maskedDict)
+                    print(maskedData)
+                    
                 }
             } catch {
                 print("❌ Failed to parse Masked_Data__c:", error.localizedDescription)

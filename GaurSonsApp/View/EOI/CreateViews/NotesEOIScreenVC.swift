@@ -377,6 +377,8 @@ class NotesEOIScreenVC: UIViewController, UITextFieldDelegate, UITextViewDelegat
                 "Note__c": companyNameAddresstxtVw?.text ?? EMPTY
             ]
         }
+        print("📌 applicantDetailsMode payload =", formPayload)
+        
         print("📌 applicantDetailsModel.notes =", applicantDetailsModel.notes ?? "NIL")
 
         print("📌 TextView note =", companyNameAddresstxtVw?.text ?? "NIL")

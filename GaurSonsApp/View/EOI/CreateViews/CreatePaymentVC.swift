@@ -720,54 +720,6 @@ class CreatePaymentVC: UIViewController {
                 "EOIAmount": Double(EOITxtFld?.text ?? "0") ?? 0
             ]
             
-//            paymentWebService.sendPaymentLink(param: payload) { error, json, status in
-//                DispatchQueue.main.async {
-//                    self.hideLoader()
-//                    
-//                    if status == .success,
-//                       let record = json?["record"] as? [String: Any],
-//                       let paymentURL = record["Payment_URL__c"] as? String,
-//                       let transactionId = record["Transaction_Id__c"] as? String,
-//                       let paymentDetailId = record["Id"] as? String {
-//
-//                        self.paymentStatusTxtFld?.text = "Success"
-//
-//                        self.paymentDetailId = paymentDetailId
-//
-//                        self.transactionIdTxtFld?.text = transactionId
-//                        self.transactionIdTxtFld?.isEnabled = false
-//
-//                        let msg = error ?? (json?["message"] as? String) ?? "Link Send Successfully!!"
-//
-//                        self.hideLoader()
-//
-//                        self.view.makeToast(
-//                            msg,
-//                            duration: 2.0,
-//                            position: .bottom
-//                        )
-//
-//                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-//                            self.navigationController?.popViewController(animated: true)
-//                        }
-//
-//                    } else {
-//
-//                        let msg = error ?? (json?["error_description"] as? String) ?? "Failed to generate payment link."
-////                        SceneDelegate.getSceneDelegate().window?.rootViewController?.view.makeToast(msg)
-//                        self.view.makeToast(
-//
-//                            msg,
-//
-//                            duration: 2.0,
-//
-//                            position: .bottom
-//
-//                        )
-//                    }
-//                }
-//            }
-            
             paymentWebService.sendPaymentLink(param: payload) { error, json, status in
                 DispatchQueue.main.async {
                     self.hideLoader()

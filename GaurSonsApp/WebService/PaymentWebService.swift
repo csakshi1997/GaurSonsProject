@@ -205,11 +205,15 @@ class PaymentWebService {
         payload: [String: Any],
         outerClosure: @escaping ((String?, [String: Any]?, ResponseStatus) -> ())
     ) {
-        
+        guard let instanceUrl = Defaults.instanceUrl else {
+            outerClosure("Invalid instance URL", nil, .error)
+            return
+        }
+        print("\(Defaults.instanceUrl ?? EMPTY)\(endPoint.CREATE_PAYMENT)")
         Task {
             do {
                 let response = try await webRequest.post(
-                    path: "https://gaursons--uat.sandbox.my.site.com/services/apexrest/payment/create",
+                    path: "\(Defaults.instanceUrl ?? EMPTY)\(endPoint.CREATE_PAYMENT)",
                     body: payload
                 )
                 
@@ -220,7 +224,6 @@ class PaymentWebService {
                     }
                     
                 } else {
-                    
                     DispatchQueue.main.async {
                         outerClosure("Invalid JSON format", nil, .error)
                     }
@@ -228,9 +231,11 @@ class PaymentWebService {
                 
             } catch {
                 
-                Utility.handleSalesforceError(error) { message, status in
-                    
-                    outerClosure(message, nil, status)
+                Utility.handleSalesforceErrorForPayment(error) { message, status in
+                    print(message)
+                    DispatchQueue.main.async {
+                        outerClosure(message, nil, status)
+                    }
                 }
             }
         }

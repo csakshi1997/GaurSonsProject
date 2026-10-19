@@ -49,117 +49,83 @@ class HomeVC: UIViewController {
     var sideMenuVC: SideBarVC?
     var userWebService = UserWebService()
     var eOIWebServices = EOIWebServices()
-    
+    var accountWebServices = AccountWebServices()
+    var registerCount: String = EMPTY
+    var bookedCount: String = EMPTY
+    var totalCustomerCount: String = EMPTY
+        
     override func viewDidLoad() {
         super.viewDidLoad()
-        userWebService.fetchCurrentSalesforceUserDetails { error, response, statusCode in
+
+        print("Instance URL::: \(Defaults.instanceUrl ?? "")")
+
+        // Fetch the logged-in Salesforce user's details.
+        userWebService.fetchCurrentSalesforceUserDetails { [weak self] error, response, statusCode in
+
+            guard let self = self else { return }
+
             if statusCode == .success {
                 let responseDict = response ?? [:]
+
                 Defaults.name = responseDict["Name"] as? String
                 Defaults.userEmail = responseDict["Email"] as? String
                 Defaults.userName = responseDict["Username"] as? String
-            }
-        }
-        
-        eOIWebServices.getNetworks { error, networks, status in
-            if status == .success, let networks = networks {
-                if let firstNetwork = networks.first {
-                    Defaults.networkId = firstNetwork.Id
-                    Defaults.networkName = firstNetwork.Name
+
+                DispatchQueue.main.async {
+                    self.setUpUI()
                 }
-            } else {
-                print("Error fetching networks: \(error ?? "Unknown")")
             }
         }
-        
-        eOIWebServices.getTotalEOICount { errorMsg, count, status in
-            switch status {
-            case .success:
-                if let count = count {
-                    self.totalEoiDigitLbl?.text = "\(count)"
-                }
-            case .error, .tokenExpired:
-                print("Error: \(errorMsg ?? "Unknown error")")
-            default:
-                break
+
+        accountWebServices.getUserAccId(
+            ApplicantId: Defaults.userId ?? EMPTY
+        ) { [weak self] error, response, status in
+
+            guard let self = self else { return }
+
+            guard status == .success else {
+                print("Failed to fetch User Account ID: \(error ?? "Unknown error")")
+                return
+            }
+
+            guard let response = response,
+                  let records = response["records"] as? [[String: Any]],
+                  let firstRecord = records.first,
+                  let account = firstRecord["Account"] as? [String: Any],
+                  let accountId = account["Id"] as? String else {
+
+                print("Account ID not found in API response")
+                return
+            }
+
+            // Save Account ID
+            Defaults.userAccountId = accountId
+
+            print("Saved Account ID: \(Defaults.userAccountId ?? EMPTY)")
+
+            // Call dashboard APIs after saving Account ID
+            DispatchQueue.main.async {
+                self.fetchHomeDashboardData()
             }
         }
-        
-        eOIWebServices.getProgressEOICount { errorMsg, count, status in
-            switch status {
-            case .success:
-                if let count = count {
-                    self.EoiInProgessDigitLbl?.text = "\(count)"
-                }
-            case .error, .tokenExpired:
-                print("Error: \(errorMsg ?? "Unknown error")")
-            default:
-                break
-            }
-        }
-        
-        eOIWebServices.getCompletedEOICount { errorMsg, count, status in
-            switch status {
-            case .success:
-                if let count = count {
-                    self.EoiInCompletedDigitLbl?.text = "\(count)"
-                }
-            case .error, .tokenExpired:
-                print("Error: \(errorMsg ?? "Unknown error")")
-            default:
-                break
-            }
-        }
-        
-        eOIWebServices.getCancelledEOICount { errorMsg, count, status in
-            switch status {
-            case .success:
-                if let count = count {
-                    self.EoiInCancelledDigitLbl?.text = "\(count)"
-                }
-            case .error, .tokenExpired:
-                print("Error: \(errorMsg ?? "Unknown error")")
-            default:
-                break
-            }
-        }
-        
-        eOIWebServices.getRegisteredCount { errorMsg, count, status in
-            switch status {
-            case .success:
-                if let count = count {
-                    self.totalRegisterDigitLbl?.text = "\(count)"
-                }
-            case .error, .tokenExpired:
-                print("Error: \(errorMsg ?? "Unknown error")")
-            default:
-                break
-            }
-        }
-        
-       eOIWebServices.getBookedCustomersCount { errorMsg, count, status in
-            switch status {
-            case .success:
-                if let count = count {
-                    self.ttotalBookingDigitLbl?.text = "\(count)"
-                }
-            case .error, .tokenExpired:
-                print("Error: \(errorMsg ?? "Unknown error")")
-            default:
-                break
-            }
-        }
-        
+
+        // Configure banner pager.
         pagerView.dataSource = self
         pagerView.delegate = self
-        pagerView.register(FSPagerViewCell.self, forCellWithReuseIdentifier: "cell")
+        pagerView.register(
+            FSPagerViewCell.self,
+            forCellWithReuseIdentifier: "cell"
+        )
         pagerView.isInfinite = true
         pagerView.automaticSlidingInterval = 3.0
         pagerView.interitemSpacing = -20
-        pagerView.itemSize = CGSize(width: pagerView.frame.width * 0.75, height: pagerView.frame.height * 0.9)
+        pagerView.itemSize = CGSize(
+            width: pagerView.frame.width * 0.75,
+            height: pagerView.frame.height * 0.9
+        )
         pagerView.transformer = FSPagerViewTransformer(type: .linear)
+
         setUpUI()
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -180,8 +146,162 @@ class HomeVC: UIViewController {
         }
     }
     
+    private func fetchHomeDashboardData() {
+
+        // 1. Fetch Networks
+        eOIWebServices.getNetworks { error, networks, status in
+
+            if status == .success, let networks = networks {
+                if let firstNetwork = networks.first {
+                    Defaults.networkId = firstNetwork.Id
+                    Defaults.networkName = firstNetwork.Name
+
+                    print("Network ID: \(firstNetwork.Id)")
+                    print("Network Name: \(firstNetwork.Name)")
+                }
+            } else {
+                print("Error fetching networks: \(error ?? "Unknown")")
+            }
+        }
+
+        // 2. Fetch Total EOI Count
+        eOIWebServices.getTotalEOICount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.totalEoiDigitLbl?.text = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("Total EOI Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+
+        // 3. Fetch In-Progress EOI Count
+        eOIWebServices.getProgressEOICount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.EoiInProgessDigitLbl?.text = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("In-Progress EOI Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+
+        // 4. Fetch Completed EOI Count
+        eOIWebServices.getCompletedEOICount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.EoiInCompletedDigitLbl?.text = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("Completed EOI Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+
+        // 5. Fetch Cancelled EOI Count
+        eOIWebServices.getCancelledEOICount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.EoiInCancelledDigitLbl?.text = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("Cancelled EOI Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+
+        // 6. Fetch Registered Customers Count
+        eOIWebServices.getRegisteredCount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.totalRegisterDigitLbl?.text = "\(count)"
+                        self?.registerCount = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("Registered Customers Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+
+        // 7. Fetch Booked Customers Count
+        eOIWebServices.getBookedCustomersCount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.ttotalBookingDigitLbl?.text = "\(count)"
+                        self?.bookedCount = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("Booked Customers Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+        
+        eOIWebServices.getAllCustomersCount { [weak self] errorMsg, count, status in
+
+            DispatchQueue.main.async {
+                switch status {
+                case .success:
+                    if let count = count {
+                        self?.totalCustomerCount = "\(count)"
+                    }
+
+                case .error, .tokenExpired:
+                    print("Booked Customers Error: \(errorMsg ?? "Unknown error")")
+
+                default:
+                    break
+                }
+            }
+        }
+    }
+    
     func fetchUserDetails() {
         if let user = UserAccountManager.shared.currentUserAccount {
+            print(user)
             let credentials = user.credentials
             print("Access Token::: \(credentials.accessToken ?? "")")
             print("USer Id::: \(Defaults.userId ?? "")")
@@ -265,11 +385,19 @@ class HomeVC: UIViewController {
 //    }
     
     @IBAction func registeredCustomerAction() {
-        Utility.gotoCustomers(summaryFilter: .registered)
+        Utility.gotoCustomers(summaryFilter: .registered, count: registerCount)
     }
 
     @IBAction func bookedCustomerAction() {
-        Utility.gotoCustomers(summaryFilter: .booked)
+        let alert = UIAlertController(
+            title: "Access Restricted",
+            message: "Channel Partner (CP) users do not have permission to view booked customer details.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+
+        present(alert, animated: true)
     }
     
 //    @IBAction func totalEOIAction() {

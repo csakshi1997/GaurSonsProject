@@ -16,6 +16,7 @@ struct EndPoints {
     var SEND_APPLICANT_COMPOSITE = "/services/data/\(RestClient.shared.apiVersion)/composite/tree/Applicant_Details__c"
     var SEND_CUSTOMERS_COMPOSITE = "/services/data/\(RestClient.shared.apiVersion)/sobjects/Customer__c/"
     var GENERATE_PAYMENT_URL = "/services/apexrest/sendPaymentLink/v1/"
+    var CREATE_PAYMENT = "/services/apexrest/payment/create"
 }
     
 final class SalesforceWebService {

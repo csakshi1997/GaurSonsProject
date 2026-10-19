@@ -1317,15 +1317,128 @@ class EOIWebServices {
         }
     }
     
-    func getBookedCustomersCount(outerClosure: @escaping ((String?, Int?, ResponseStatus) -> ())) {
+    func getBookedCustomersCount(
+        outerClosure: @escaping (String?, Int?, ResponseStatus) -> Void
+    ) {
+        Task {
+            guard let instanceUrl = Defaults.instanceUrl else {
+                DispatchQueue.main.async {
+                    outerClosure(
+                        "Invalid instance URL",
+                        nil,
+                        .error
+                    )
+                }
+                return
+            }
+
+            let endpoint = "\(instanceUrl)/services/apexrest/v1/booking/bookedcustomer"
+
+            // Replace this with the actual Channel Partner Account ID.
+            let channelPartnerId = Defaults.userAccountId ?? EMPTY
+
+            let requestBody: [String: Any] = [
+                "channelPartner": channelPartnerId
+            ]
+
+            do {
+                var request = URLRequest(url: URL(string: endpoint)!)
+                request.httpMethod = "POST"
+                request.setValue(
+                    "application/json",
+                    forHTTPHeaderField: "Content-Type"
+                )
+                request.httpBody = try JSONSerialization.data(
+                    withJSONObject: requestBody
+                )
+
+                // Use the active Salesforce session.
+                let accessToken = Defaults.accessToken ?? EMPTY
+
+                request.setValue(
+                    "Bearer \(accessToken)",
+                    forHTTPHeaderField: "Authorization"
+                )
+
+                let (data, response) = try await URLSession.shared.data(
+                    for: request
+                )
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    DispatchQueue.main.async {
+                        outerClosure(
+                            "Invalid server response",
+                            nil,
+                            .error
+                        )
+                    }
+                    return
+                }
+
+                if httpResponse.statusCode == 401 {
+                    DispatchQueue.main.async {
+//                        Utility.logoutAction()
+                        outerClosure(
+                            "Session expired. Please login again.",
+                            nil,
+                            .tokenExpired
+                        )
+                    }
+                    return
+                }
+
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    let message = String(data: data, encoding: .utf8)
+                        ?? "Request failed with status \(httpResponse.statusCode)"
+
+                    DispatchQueue.main.async {
+                        outerClosure(message, nil, .error)
+                    }
+                    return
+                }
+
+                let json = try JSONSerialization.jsonObject(
+                    with: data
+                ) as? [String: Any]
+
+                guard
+                    let json = json,
+                    let success = json["success"] as? Bool,
+                    success,
+                    let count = (json["count"] as? NSNumber)?.intValue
+                else {
+                    let message = json?["message"] as? String
+                        ?? "Invalid API response"
+
+                    DispatchQueue.main.async {
+                        outerClosure(message, nil, .error)
+                    }
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    outerClosure(nil, count, .success)
+                }
+
+            } catch {
+                DispatchQueue.main.async {
+                    outerClosure(
+                        error.localizedDescription,
+                        nil,
+                        .error
+                    )
+                }
+            }
+        }
+    }
+    
+    func getAllCustomersCount(outerClosure: @escaping ((String?, Int?, ResponseStatus) -> ())) {
         Task {
             let soqlQuery = """
-            SELECT Count(Id)
-            FROM Booking__c
-            WHERE Opportunity__r.Booked__c = true
-            AND Opportunity__r.Customer__r.Converted_to_EOI__c = true
-            AND Audit_Approval_Status__c = 'Approved'
-            """
+                SELECT COUNT()
+                FROM Customer__c
+                """
+            
             guard let encodedQuery = soqlQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
                   let instanceUrl = Defaults.instanceUrl else {
                 outerClosure("Invalid query or instance URL", nil, .error)
@@ -1339,7 +1452,7 @@ class EOIWebServices {
             
             do {
                 let response = try await RestClient.shared.send(request: request)
-                
+                print(response)
                 if let urlResponse = response.urlResponse as? HTTPURLResponse {
                     print("HTTP Status Code: \(urlResponse.statusCode)")
                     
@@ -1353,11 +1466,14 @@ class EOIWebServices {
                 }
                 
                 if let json = try response.asJson() as? [String: Any],
+                  
                    let records = json["records"] as? [[String: Any]],
                    let firstRecord = records.first,
                    let count = firstRecord["expr0"] as? Int {
+                    print(records)
+
                     
-                    print("✅ Count Value: \(count)")
+                    print("✅ Total customer Count Value: \(count)")
                     
                     DispatchQueue.main.async {
                         outerClosure(nil, count, .success)

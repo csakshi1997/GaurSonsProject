@@ -452,7 +452,8 @@ class QR: UIViewController {
                 return
             }
 
-            let baseUrl = "https://gaursons--uat.sandbox.my.site.com/s/newcustomer"
+            let baseUrl = "https://gaursons.my.site.com/s/newcustomer"
+//            let baseUrl = "\(Defaults.instanceUrl ?? EMPTY)/s/newcustomer"
 
             guard let encryptedProjectId = encryptAES(projectId),
                   let encryptedAccountId = encryptAES(accountId) else {
@@ -488,7 +489,11 @@ class QR: UIViewController {
                     return
                 }
 
-                let baseUrl = "https://gaursons--uat.sandbox.my.site.com/s/newcustomer"
+//                let baseUrl = "https://gaursons--uat.sandbox.my.site.com/s/newcustomer"
+                let baseUrl = "https://gaursons.my.site.com/s/newcustomer"
+
+//                let baseUrl = "\(Defaults.instanceUrl ?? EMPTY)/s/newcustomer"
+                
                 guard let encryptedProjectId = encryptAES(projectId),
                       let encryptedAccountId = encryptAES(accountId) else {
                     showAlert(with: "Error", message: "Failed to encrypt IDs")

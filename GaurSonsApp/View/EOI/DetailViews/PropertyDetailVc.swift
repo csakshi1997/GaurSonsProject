@@ -12,7 +12,6 @@ class PropertyDetailVc: UIViewController {
     
     @IBOutlet var crossBtn: UIButton?
     @IBOutlet var topLbl: UILabel?
-    
     @IBOutlet var UnitView: UIView?
     @IBOutlet var unitInventoryNameLbl: UILabel?
     @IBOutlet var unitBookingDateTimeLbl: UILabel?
@@ -26,6 +25,11 @@ class PropertyDetailVc: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .clear
+        let dimView = UIView(frame: view.bounds)
+        dimView.backgroundColor = UIColor.black.withAlphaComponent(0.35)
+        dimView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.insertSubview(dimView, at: 0)
         setUpUI()
     }
     

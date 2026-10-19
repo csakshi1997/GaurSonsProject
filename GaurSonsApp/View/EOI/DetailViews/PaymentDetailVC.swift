@@ -446,7 +446,7 @@ extension PaymentDetailVC: UITableViewDelegate, UITableViewDataSource {
         }
         let cell: PaymentDetailsFileCell = tableView.dequeueReusableCell(withIdentifier: "PaymentDetailsFileCell", for: indexPath) as! PaymentDetailsFileCell
         let fileDict = self.fileArray[indexPath.row]
-        cell.titleLbl?.text = fileDict.fileName
+        cell.titleLbl?.text = "Attachment \(indexPath.row + 1)"
         cell.sizeLbl?.text = fileDict.fileSize
         cell.onPreviewTapped = { [weak self] in
             self?.previewFile(at: indexPath.row)

@@ -67,6 +67,7 @@ class AddressEOIScreenVC: UIViewController {
     var isRegisteredRentedBtnEnabled: Bool = false
     var isYesSamePermamnet: Bool = false
     var isYesSameCorrespondence: Bool = false
+    var isCustomerDetailsSelected: Bool = false
     var validation = Validation()
     var applicantIndex: Int?
     
@@ -317,6 +318,10 @@ class AddressEOIScreenVC: UIViewController {
 
             }
 
+        }
+        
+        if isFromCustomers && !isAddharVerify {
+            populateAddressFromCustomer()
         }
         if Defaults.isIndividualEnable ?? false {
             pageNumberLbl?.text = "2"
@@ -610,6 +615,72 @@ class AddressEOIScreenVC: UIViewController {
         }
     }
     
+    private func populateAddressFromCustomer() {
+        guard let customer = cuatomerDetailsDict else {
+            print("❌ Customer details are nil")
+            return
+        }
+
+        // Build the address using the customer response.
+        let address: String
+
+        if let completeAddress = customer.completeAddress,
+           !completeAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           completeAddress.caseInsensitiveCompare("<null>") != .orderedSame {
+
+            address = completeAddress
+
+        } else {
+            let addressParts = [
+                customer.house,
+                customer.street,
+                customer.landmark,
+                customer.vtc,
+                customer.postOffice,
+                customer.district
+            ]
+            .compactMap { $0 }
+            .filter {
+                let value = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                return !value.isEmpty &&
+                       value.caseInsensitiveCompare("<null>") != .orderedSame
+            }
+
+            address = addressParts.joined(separator: ", ")
+        }
+
+        let country = customer.country ?? ""
+        let state = customer.state ?? ""
+        let city = customer.district ?? ""
+        let pincode = customer.pincode ?? ""
+
+        DispatchQueue.main.async {
+            if self.isIndividualApplicantFlow {
+                // Individual applicant: Permanent Address
+                self.permanentAddresstxtFld?.text = address
+                self.permanentCountrytxtFld?.text = country
+                self.permanentStatetxtFld?.text = state
+                self.permanentCitytxtFld?.text = city
+                self.permanentPincodetxtFld?.text = pincode
+
+            } else {
+                // Non-individual applicant: Registered Address
+                self.registerAddresstxtFld?.text = address
+                self.registerCountrytxtFld?.text = country
+                self.registerStatetxtFld?.text = state
+                self.registerCitytxtFld?.text = city
+                self.registerPincodetxtFld?.text = pincode
+            }
+
+            print("✅ Customer address populated")
+            print("🌍 Country: \(country)")
+            print("📍 Address: \(address)")
+            print("🏙️ State: \(state)")
+            print("🏙️ City: \(city)")
+            print("📮 Pincode: \(pincode)")
+        }
+    }
+    
     func clearAllFields() {
         permanentAddresstxtFld?.text = ""
         permanentCountrytxtFld?.text = ""
@@ -857,94 +928,252 @@ class AddressEOIScreenVC: UIViewController {
         }
     }
     
+//    @IBAction func samepermanentAddressAction(_ sender: UIButton?) {
+//        isYesSamePermamnet = false
+//        if sender?.tag == 31 {
+//            isYesSamePermamnet = true
+//            isCorrespondenceYES?.backgroundColor = UIColor(hex: "223B30")
+//            isCorrespondenceYES?.setTitleColor(.white, for: .normal)
+//            isCorrespondenceNO?.backgroundColor = UIColor(hex: "DFE1E0")
+//            isCorrespondenceNO?.setTitleColor(.black, for: .normal)
+//            correspondenceAddresstxtFld?.text = permanentAddresstxtFld?.text
+//            correspondenceCountrytxtFld?.text = permanentCountrytxtFld?.text
+//            correspondenceStatetxtFld?.text = permanentStatetxtFld?.text
+//            correspondenceCitytxtFld?.text = permanentCitytxtFld?.text
+//            correspondencePincodetxtFld?.text = permanentPincodetxtFld?.text
+//            if isPermanentSelfOwnedBtnEnabled {
+//                isCorrespondencetSelfOwnedBtnEnabled = true
+//                correspondenceSelfOwnedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
+//            } else if isPermanentRentedBtnEnabled {
+//                isCorrespondenceRentedBtnEnabled = true
+//                correspondenceRentedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
+//            }
+//        } else if sender?.tag == 32 {
+//            isYesSamePermamnet = false
+//            isCorrespondenceYES?.backgroundColor = UIColor(hex: "DFE1E0")
+//            isCorrespondenceYES?.setTitleColor(.black, for: .normal)
+//            isCorrespondenceNO?.backgroundColor = UIColor(hex: "223B30")
+//            isCorrespondenceNO?.setTitleColor(.white, for: .normal)
+//            correspondenceAddresstxtFld?.text = ""
+//            correspondenceCountrytxtFld?.text = ""
+//            correspondenceStatetxtFld?.text = ""
+//            correspondenceCitytxtFld?.text = ""
+//            correspondencePincodetxtFld?.text = ""
+//            isCorrespondencetSelfOwnedBtnEnabled = false
+//            isCorrespondenceRentedBtnEnabled = false
+//            correspondenceRentedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+//            correspondenceSelfOwnedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+//        }
+//        else if sender?.tag == 33 {
+//            isYesSamePermamnet = false
+//            isRegisterYES?.backgroundColor = UIColor(hex: "DFE1E0")
+//            isRegisterYES?.setTitleColor(.black, for: .normal)
+//            isRegisterNO?.backgroundColor = UIColor(hex: "223B30")
+//            isRegisterNO?.setTitleColor(.white, for: .normal)
+//            registerAddresstxtFld?.text = ""
+//            registerCountrytxtFld?.text = ""
+//            registerStatetxtFld?.text = ""
+//            registerCitytxtFld?.text = ""
+//            registerPincodetxtFld?.text = ""
+//            isRegisteredSelfOwnedBtnEnabled = false
+//            isRegisteredRentedBtnEnabled = false
+//            registeredRentedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+//            registeredSelfOwnedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+//        }
+//    }
+    
     @IBAction func samepermanentAddressAction(_ sender: UIButton?) {
-        isYesSamePermamnet = false
-        if sender?.tag == 31 {
+        guard let tag = sender?.tag else { return }
+
+        if tag == 31 { // YES: Correspondence = Permanent
+
             isYesSamePermamnet = true
+
             isCorrespondenceYES?.backgroundColor = UIColor(hex: "223B30")
             isCorrespondenceYES?.setTitleColor(.white, for: .normal)
             isCorrespondenceNO?.backgroundColor = UIColor(hex: "DFE1E0")
             isCorrespondenceNO?.setTitleColor(.black, for: .normal)
+
+            // Copy permanent address into correspondence fields
             correspondenceAddresstxtFld?.text = permanentAddresstxtFld?.text
             correspondenceCountrytxtFld?.text = permanentCountrytxtFld?.text
             correspondenceStatetxtFld?.text = permanentStatetxtFld?.text
             correspondenceCitytxtFld?.text = permanentCitytxtFld?.text
             correspondencePincodetxtFld?.text = permanentPincodetxtFld?.text
-            if isPermanentSelfOwnedBtnEnabled {
-                isCorrespondencetSelfOwnedBtnEnabled = true
-                correspondenceSelfOwnedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
-            } else if isPermanentRentedBtnEnabled {
-                isCorrespondenceRentedBtnEnabled = true
-                correspondenceRentedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
-            }
-        } else if sender?.tag == 32 {
+
+            // Disable correspondence fields
+            correspondenceAddresstxtFld?.isEnabled = false
+            correspondenceCountrytxtFld?.isEnabled = false
+            correspondenceStatetxtFld?.isEnabled = false
+            correspondenceCitytxtFld?.isEnabled = false
+            correspondencePincodetxtFld?.isEnabled = false
+
+            // Copy ownership selection
+            isCorrespondencetSelfOwnedBtnEnabled = isPermanentSelfOwnedBtnEnabled
+            isCorrespondenceRentedBtnEnabled = isPermanentRentedBtnEnabled
+
+            correspondenceSelfOwnedBtn?.setImage(
+                UIImage(named: isCorrespondencetSelfOwnedBtnEnabled ? "RodioSelected" : "RodioUnselected"),
+                for: .normal
+            )
+
+            correspondenceRentedBtn?.setImage(
+                UIImage(named: isCorrespondenceRentedBtnEnabled ? "RodioSelected" : "RodioUnselected"),
+                for: .normal
+            )
+
+        } else if tag == 32 { // NO: Correspondence address is different
+
             isYesSamePermamnet = false
+
             isCorrespondenceYES?.backgroundColor = UIColor(hex: "DFE1E0")
             isCorrespondenceYES?.setTitleColor(.black, for: .normal)
             isCorrespondenceNO?.backgroundColor = UIColor(hex: "223B30")
             isCorrespondenceNO?.setTitleColor(.white, for: .normal)
+
+            // Clear correspondence fields
             correspondenceAddresstxtFld?.text = ""
             correspondenceCountrytxtFld?.text = ""
             correspondenceStatetxtFld?.text = ""
             correspondenceCitytxtFld?.text = ""
             correspondencePincodetxtFld?.text = ""
+
+            // Enable correspondence fields
+            correspondenceAddresstxtFld?.isEnabled = true
+            correspondenceCountrytxtFld?.isEnabled = true
+            correspondenceStatetxtFld?.isEnabled = true
+            correspondenceCitytxtFld?.isEnabled = true
+            correspondencePincodetxtFld?.isEnabled = true
+
+            // Reset ownership selection
             isCorrespondencetSelfOwnedBtnEnabled = false
             isCorrespondenceRentedBtnEnabled = false
-            correspondenceRentedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
-            correspondenceSelfOwnedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
-        }
-        else if sender?.tag == 33 {
-            isYesSamePermamnet = false
-            isRegisterYES?.backgroundColor = UIColor(hex: "DFE1E0")
-            isRegisterYES?.setTitleColor(.black, for: .normal)
-            isRegisterNO?.backgroundColor = UIColor(hex: "223B30")
-            isRegisterNO?.setTitleColor(.white, for: .normal)
-            registerAddresstxtFld?.text = ""
-            registerCountrytxtFld?.text = ""
-            registerStatetxtFld?.text = ""
-            registerCitytxtFld?.text = ""
-            registerPincodetxtFld?.text = ""
-            isRegisteredSelfOwnedBtnEnabled = false
-            isRegisteredRentedBtnEnabled = false
-            registeredRentedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
-            registeredSelfOwnedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+
+            correspondenceSelfOwnedBtn?.setImage(
+                UIImage(named: "RodioUnselected"),
+                for: .normal
+            )
+
+            correspondenceRentedBtn?.setImage(
+                UIImage(named: "RodioUnselected"),
+                for: .normal
+            )
         }
     }
     
+//    @IBAction func sameCorrepondenceAddressAction(_ sender: UIButton?) {
+//        isYesSameCorrespondence = false
+//        if sender?.tag == 33 {
+//            isRegisterYES?.backgroundColor = UIColor(hex: "223B30")
+//            isRegisterYES?.setTitleColor(.white, for: .normal)
+//            isRegisterNO?.backgroundColor = UIColor(hex: "DFE1E0")
+//            isRegisterNO?.setTitleColor(.black, for: .normal)
+//            registerAddresstxtFld?.text = correspondenceAddresstxtFld?.text
+//            registerCountrytxtFld?.text = correspondenceCountrytxtFld?.text
+//            registerStatetxtFld?.text = correspondenceStatetxtFld?.text
+//            registerCitytxtFld?.text = correspondenceCitytxtFld?.text
+//            registerPincodetxtFld?.text = correspondencePincodetxtFld?.text
+//            if isCorrespondencetSelfOwnedBtnEnabled {
+//                isRegisteredSelfOwnedBtnEnabled = true
+//                registeredSelfOwnedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
+//            } else if isCorrespondenceRentedBtnEnabled {
+//                isRegisteredRentedBtnEnabled = true
+//                registeredRentedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
+//            }
+//        } else if sender?.tag == 34 {
+//            isYesSameCorrespondence = false
+//            isRegisterYES?.backgroundColor = UIColor(hex: "DFE1E0")
+//            isRegisterYES?.setTitleColor(.black, for: .normal)
+//            isRegisterNO?.backgroundColor = UIColor(hex: "223B30")
+//            isRegisterNO?.setTitleColor(.white, for: .normal)
+//            registerAddresstxtFld?.text = ""
+//            registerCountrytxtFld?.text = ""
+//            registerStatetxtFld?.text = ""
+//            registerCitytxtFld?.text = ""
+//            registerPincodetxtFld?.text = ""
+//            isRegisteredSelfOwnedBtnEnabled = false
+//            isRegisteredRentedBtnEnabled = false
+//            registeredRentedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+//            registeredSelfOwnedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+//        }
+//    }
+    
     @IBAction func sameCorrepondenceAddressAction(_ sender: UIButton?) {
-        isYesSameCorrespondence = false
-        if sender?.tag == 33 {
+        guard let tag = sender?.tag else { return }
+
+        if tag == 33 { // YES: Registered = Correspondence
+
+            isYesSameCorrespondence = true
+
             isRegisterYES?.backgroundColor = UIColor(hex: "223B30")
             isRegisterYES?.setTitleColor(.white, for: .normal)
             isRegisterNO?.backgroundColor = UIColor(hex: "DFE1E0")
             isRegisterNO?.setTitleColor(.black, for: .normal)
+
+            // Copy correspondence address into registered fields
             registerAddresstxtFld?.text = correspondenceAddresstxtFld?.text
             registerCountrytxtFld?.text = correspondenceCountrytxtFld?.text
             registerStatetxtFld?.text = correspondenceStatetxtFld?.text
             registerCitytxtFld?.text = correspondenceCitytxtFld?.text
             registerPincodetxtFld?.text = correspondencePincodetxtFld?.text
-            if isCorrespondencetSelfOwnedBtnEnabled {
-                isRegisteredSelfOwnedBtnEnabled = true
-                registeredSelfOwnedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
-            } else if isCorrespondenceRentedBtnEnabled {
-                isRegisteredRentedBtnEnabled = true
-                registeredRentedBtn?.setImage(UIImage(named: "RodioSelected"), for: .normal)
-            }
-        } else if sender?.tag == 34 {
+
+            // Disable registered fields
+            registerAddresstxtFld?.isEnabled = false
+            registerCountrytxtFld?.isEnabled = false
+            registerStatetxtFld?.isEnabled = false
+            registerCitytxtFld?.isEnabled = false
+            registerPincodetxtFld?.isEnabled = false
+
+            // Copy ownership selection
+            isRegisteredSelfOwnedBtnEnabled = isCorrespondencetSelfOwnedBtnEnabled
+            isRegisteredRentedBtnEnabled = isCorrespondenceRentedBtnEnabled
+
+            registeredSelfOwnedBtn?.setImage(
+                UIImage(named: isRegisteredSelfOwnedBtnEnabled ? "RodioSelected" : "RodioUnselected"),
+                for: .normal
+            )
+
+            registeredRentedBtn?.setImage(
+                UIImage(named: isRegisteredRentedBtnEnabled ? "RodioSelected" : "RodioUnselected"),
+                for: .normal
+            )
+
+        } else if tag == 34 { // NO: Registered address is different
+
             isYesSameCorrespondence = false
+
             isRegisterYES?.backgroundColor = UIColor(hex: "DFE1E0")
             isRegisterYES?.setTitleColor(.black, for: .normal)
             isRegisterNO?.backgroundColor = UIColor(hex: "223B30")
             isRegisterNO?.setTitleColor(.white, for: .normal)
+
+            // Clear registered fields
             registerAddresstxtFld?.text = ""
             registerCountrytxtFld?.text = ""
             registerStatetxtFld?.text = ""
             registerCitytxtFld?.text = ""
             registerPincodetxtFld?.text = ""
+
+            // Enable registered fields
+            registerAddresstxtFld?.isEnabled = true
+            registerCountrytxtFld?.isEnabled = true
+            registerStatetxtFld?.isEnabled = true
+            registerCitytxtFld?.isEnabled = true
+            registerPincodetxtFld?.isEnabled = true
+
+            // Reset ownership selection
             isRegisteredSelfOwnedBtnEnabled = false
             isRegisteredRentedBtnEnabled = false
-            registeredRentedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
-            registeredSelfOwnedBtn?.setImage(UIImage(named: "RodioUnselected"), for: .normal)
+
+            registeredSelfOwnedBtn?.setImage(
+                UIImage(named: "RodioUnselected"),
+                for: .normal
+            )
+
+            registeredRentedBtn?.setImage(
+                UIImage(named: "RodioUnselected"),
+                for: .normal
+            )
         }
     }
     

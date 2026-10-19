@@ -244,16 +244,69 @@ class AuthorizationVC: UIViewController {
         
     }
     
+//    func clearAllFields() {
+//        salurationSignatarytxtFld?.text = ""
+//        RelationtxtFld?.text = ""
+//        NameAuthorizationtxtFld?.text = ""
+//        salutationRelativetxtFld?.text = ""
+//        relativeNametxtFld?.text = ""
+//        PANtxtFld?.text = ""
+//        PANUploadtxtFld?.text = ""
+//        aadhartxtFld?.text = ""
+//        aadharUploadtxtFld?.text = ""
+//    }
+    
     func clearAllFields() {
-        salurationSignatarytxtFld?.text = ""
-        RelationtxtFld?.text = ""
-        NameAuthorizationtxtFld?.text = ""
-        salutationRelativetxtFld?.text = ""
-        relativeNametxtFld?.text = ""
-        PANtxtFld?.text = ""
-        PANUploadtxtFld?.text = ""
-        aadhartxtFld?.text = ""
-        aadharUploadtxtFld?.text = ""
+
+        // 1. Clear all text fields
+        let textFields: [MDCOutlinedTextField?] = [
+            salurationSignatarytxtFld,
+            RelationtxtFld,
+            NameAuthorizationtxtFld,
+            salutationRelativetxtFld,
+            relativeNametxtFld,
+            PANtxtFld,
+            PANUploadtxtFld,
+            aadhartxtFld,
+            aadharUploadtxtFld
+        ]
+
+        textFields.forEach { $0?.text = "" }
+
+        // 2. Re-enable PAN and Aadhaar fields if they were disabled
+        PANtxtFld?.isEnabled = true
+        aadhartxtFld?.isEnabled = true
+
+        // 3. Reset upload-related UI
+        activeUploadField = nil
+
+        // 4. Hide dropdowns and dismiss the keyboard
+        salutationSignataryDropDown.hide()
+        view.endEditing(true)
+
+        // 5. Clear uploaded documents from the current local applicant
+        if let index = applicantIndex,
+           var applicant = OpportunityManager.shared.getApplicant(at: index) {
+
+            let documentTitles: Set<String> = [
+                "PAN",
+                "Aadhar"
+            ]
+
+            applicant.uploadedFiles.removeAll {
+                documentTitles.contains($0.title)
+            }
+
+            applicant.authorizationPanUploadFileName = nil
+            applicant.authorizationAadhaarUploadFileName = nil
+
+            OpportunityManager.shared.updateApplicant(
+                at: index,
+                with: applicant
+            )
+        }
+
+        print("Authorization form reset successfully")
     }
     
     func addTapGestureToDismissKeyboard() {
