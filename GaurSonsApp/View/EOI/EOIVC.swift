@@ -91,112 +91,7 @@ class EOIVC: UIViewController {
 //        getEOI()
     }
     
-    
-    
-            
-//    func getEOI() {
-//        print("Selected Filter =", selectedFilterType)
-//        Utility.getAllEOIRecords(
-//            pageNumber: pageNumber,
-//            summaryFilter: summaryFilter,
-//            filterType: selectedFilterType
-//        ) { success in
-//            
-//            if success {
-//                DispatchQueue.main.async {
-//                    
-//                    self.isLoading = false
-//                    self.spinner.stopAnimating()
-//                    
-//                    if self.pageNumber == 1 {
-//                        
-//                        self.EOIModelData = GlobalData.allEOIModel.sorted {
-//                            ($0.createdDate ?? "") > ($1.createdDate ?? "")
-//                        }
-//                        
-//                    } else {
-//                        
-//                        self.EOIModelData.append(
-//                            contentsOf: GlobalData.allEOIModel
-//                        )
-//                    }
-//                    
-//                    self.filteredRecord = self.EOIModelData
-////                    self.setupPaginationButtons()
-//
-//                    self.updateUIAfterDataChange()
-//                    self.tbleview?.reloadData()
-//                    print(self.filteredRecord.count)
-//                }
-//            } else {
-//                DispatchQueue.main.async {
-//                    self.isLoading = false
-//                    self.spinner.stopAnimating()
-//                    
-//                    self.filteredRecord = []
-//                    self.tbleview?.reloadData()
-//                    
-//                    self.noDataFoundVw?.isHidden = false
-//                    self.tbleview?.isHidden = true
-//                }
-//            }
-//        }
-//    }
-    
-//    func getEOI() {
-//        guard InternetConnectionManager.isConnectedToNetwork() else {
-//            spinner.stopAnimating()
-//            isLoading = false
-//            filteredRecord.removeAll()
-//            showEmptyState(.noInternet)
-//            return
-//        }
-//
-//        hideEmptyState()
-//
-//        Utility.getAllEOIRecords(
-//            pageNumber: pageNumber,
-//            summaryFilter: summaryFilter,
-//            filterType: selectedFilterType
-//        ) { success in
-//
-//            DispatchQueue.main.async {
-//
-//                self.isLoading = false
-//                self.spinner.stopAnimating()
-//
-//                if success {
-//
-//                    if self.pageNumber == 1 {
-//                        self.EOIModelData = GlobalData.allEOIModel.sorted {
-//                            ($0.createdDate ?? "") > ($1.createdDate ?? "")
-//                        }
-//                    } else {
-//                        self.EOIModelData.append(contentsOf: GlobalData.allEOIModel)
-//                    }
-//
-//                    self.filteredRecord = self.EOIModelData
-//
-//                    if self.filteredRecord.isEmpty {
-//                        self.showEmptyState(.noResults)
-//                    } else {
-//                        self.hideEmptyState()
-//                    }
-//
-//                    self.tbleview?.reloadData()
-//
-//                } else {
-//
-//                    self.filteredRecord.removeAll()
-//                    self.showEmptyState(.noResults)
-//                }
-//            }
-//        }
-//    }
-    
-    
     func getEOI() {
-        
         guard InternetConnectionManager.isConnectedToNetwork() else {
             spinner.stopAnimating()
             isLoading = false
@@ -206,13 +101,11 @@ class EOIVC: UIViewController {
         }
 
         hideEmptyState()
-
         Utility.getAllEOIRecords(
             pageNumber: pageNumber,
             summaryFilter: summaryFilter,
             filterType: selectedFilterType
         ) { success in
-
             DispatchQueue.main.async {
 
                 self.isLoading = false
@@ -251,6 +144,8 @@ class EOIVC: UIViewController {
             }
         }
     }
+    
+    
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -973,6 +868,7 @@ extension EOIVC: UITableViewDelegate, UITableViewDataSource {
         let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
         let detailsListVC = storyboard.instantiateViewController(withIdentifier: "DetailVC") as! DetailVC
         detailsListVC.EOiModelDict = EOIDict
+        print(EOIDict)
         detailsListVC.EOIID = EOIDict.id ?? EMPTY
         self.navigationController?.pushViewController(detailsListVC, animated: true)
     }

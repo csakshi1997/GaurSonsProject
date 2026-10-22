@@ -56,7 +56,6 @@ class HomeVC: UIViewController {
         
     override func viewDidLoad() {
         super.viewDidLoad()
-
         print("Instance URL::: \(Defaults.instanceUrl ?? "")")
 
         // Fetch the logged-in Salesforce user's details.

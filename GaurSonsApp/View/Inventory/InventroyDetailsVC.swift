@@ -577,32 +577,6 @@ extension InventroyDetailsVC: UICollectionViewDataSource, UICollectionViewDelega
         detailsVC.isComingFromEOI = isComingFromEOIDetailScreen
         detailsVC.oppId = oppId
         detailsVC.isUnitAlreadyBlocked = isUnitAlreadyBlocked
-
-//        detailsVC.onUnitBlocked = { [weak self] unitId in
-//
-//            guard let self = self else { return }
-//
-//            if let index = GlobalData.allInventoryProjects.firstIndex(where: {
-//                $0.id == unitId
-//            }) {
-//                GlobalData.allInventoryProjects[index].unitStatus = "Hold"
-//            }
-//
-//            self.updateUI()
-//
-//            self.rebuildFloorSections()
-//
-//            self.floorCollectionView?.reloadData()
-//
-//            self.onUnitBlocked?(unitId)
-//
-//
-////            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-////                
-////                self.navigationController?.popViewController(animated: true)
-////                
-////            }
-//        }
         
         detailsVC.onUnitBlocked = { [weak self] unitId in
             guard let self = self else { return }
@@ -986,42 +960,148 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
         present(alert, animated: true)
     }
     
+//    private func performBlockUnit() {
+//        guard blockButton.isEnabled else { return }
+//
+//           blockButton.isEnabled = false
+//
+//           blockButton.alpha = 0.5
+//        guard let unitId = unitDetails?.id,
+//              !oppId.isEmpty else {
+//
+//            Utility.showAlert(message: "Required data missing")
+//            return
+//        }
+//
+//        let opportunityId = oppId
+//
+//        let formatter = DateFormatter()
+//        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+//        formatter.timeZone = .current
+//
+//        let currentDateTime = formatter.string(from: Date())
+//
+//        let dateFormatter = DateFormatter()
+//        dateFormatter.dateFormat = "yyyy-MM-dd"
+//
+//        let currentDate = dateFormatter.string(from: Date())
+//
+//        let opportunityBody: [String: Any] = [
+//            "RecordTypeId": Defaults.unsoldRecordTypeId ?? EMPTY,
+//            "Stage__c": "Payment Detail",
+//            "Hold_Counter__c": "1",
+//            "OwnerId": Defaults.userId ?? EMPTY,
+//            "Inventory_Status__c": "Hold",
+//            "Unit_Hold_Date_Time__c": currentDateTime,
+//            "Unit__c": unitId
+//        ]
+//
+//        let unitBody: [String: Any] = [
+//            "Opportunity__c": opportunityId,
+//            "Unit_Status__c": "Hold",
+//            "Unit_Hold_Date__c": currentDate
+//        ]
+//        
+//        print("opportunityBody opportunityBody\(opportunityBody)")
+//        
+//        print("unitBody unitBody\(unitBody)")
+//
+//        SwiftLoader.show(animated: true)
+//
+//        projectWebServices.updateRecord(
+//            objectName: "Unit_Inventory__c",
+//            recordId: unitId,
+//            body: unitBody
+//        ) { [weak self] unitSuccess, unitError in
+//
+//            guard let self = self else { return }
+//
+//            if unitSuccess {
+//
+//                self.projectWebServices.updateRecord(
+//                    objectName: "Opportunity__c",
+//                    recordId: opportunityId,
+//                    body: opportunityBody
+//                ) { success, errorMessage in
+//
+//                    DispatchQueue.main.async {
+//
+//                        SwiftLoader.hide()
+//
+//                        if success {
+//
+//                            self.unitDetails?.unitStatus = "Hold"
+//
+//                            if let unitId = self.unitDetails?.id {
+//                                self.onUnitBlocked?(unitId)
+//                            }
+//
+//                            self.view.makeToast("Unit blocked successfully")
+//                            self.dismissSheet()
+////                            self.navigationController?.popViewController(animated: true)
+//
+//                        } else {
+//
+//                            self.showErrorAndDismiss(
+//                                unitError ?? "Failed to update Unit"
+//                            )
+//                        }
+//                    }
+//                }
+//
+//            } else {
+//
+//                DispatchQueue.main.async {
+//
+//                    SwiftLoader.hide()
+//
+//                    self.showErrorAndDismiss(
+//                        unitError ?? "Failed to update Opportunity"
+//                    )
+//                }
+//            }
+//        }
+//    }
+    
     private func performBlockUnit() {
+        
         guard blockButton.isEnabled else { return }
+        
+        blockButton.isEnabled = false
+        blockButton.alpha = 0.5
 
-           blockButton.isEnabled = false
-
-           blockButton.alpha = 0.5
         guard let unitId = unitDetails?.id,
               !oppId.isEmpty else {
-
+            
             Utility.showAlert(message: "Required data missing")
             return
         }
-
+        
         let opportunityId = oppId
-
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        formatter.timeZone = .current
-
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0) // UTC
         let currentDateTime = formatter.string(from: Date())
-
+        
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
-
+        
         let currentDate = dateFormatter.string(from: Date())
-
+        
+        
+        
         let opportunityBody: [String: Any] = [
             "RecordTypeId": Defaults.unsoldRecordTypeId ?? EMPTY,
             "Stage__c": "Payment Detail",
             "Hold_Counter__c": "1",
-            "OwnerId": Defaults.userId ?? EMPTY,
+            "OwnerId": ownerId,
             "Inventory_Status__c": "Hold",
             "Unit_Hold_Date_Time__c": currentDateTime,
             "Unit__c": unitId
         ]
-
+        
         let unitBody: [String: Any] = [
             "Opportunity__c": opportunityId,
             "Unit_Status__c": "Hold",
@@ -1031,61 +1111,182 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
         print("opportunityBody opportunityBody\(opportunityBody)")
         
         print("unitBody unitBody\(unitBody)")
-
+        
         SwiftLoader.show(animated: true)
-
+        
+        SwiftLoader.show(animated: true)
+        
+        // STEP 1: Hold Unit Inventory
         projectWebServices.updateRecord(
             objectName: "Unit_Inventory__c",
             recordId: unitId,
             body: unitBody
         ) { [weak self] unitSuccess, unitError in
-
+            
             guard let self = self else { return }
+            
+            guard unitSuccess else {
+                
+                DispatchQueue.main.async {
+                    SwiftLoader.hide()
+                    self.view.makeToast(unitError ?? "Failed to hold Unit Inventory")
+                }
+                return
+            }
+            
+            
+            // STEP 2: Update Opportunity
+            self.projectWebServices.updateRecord(
+                objectName: "Opportunity__c",
+                recordId: opportunityId,
+                body: opportunityBody
+            ) { [weak self] opportunitySuccess, opportunityError in
 
-            if unitSuccess {
+                guard let self = self else {
+                    print("❌ Self is nil after Opportunity update")
+                    return
+                }
 
+                print("========== OPPORTUNITY UPDATE RESULT ==========")
+                print("Success:", opportunitySuccess)
+                print("Error:", opportunityError ?? "nil")
+                print("================================================")
+
+                // Opportunity update succeeded.
+                if opportunitySuccess {
+
+                    DispatchQueue.main.async {
+                        SwiftLoader.hide()
+
+                        self.unitDetails?.unitStatus = "Hold"
+                        self.onUnitBlocked?(unitId)
+
+                        self.view.makeToast("Unit blocked successfully")
+                        self.dismissSheet()
+                    }
+
+                    return
+                }
+
+                // STEP 3: Opportunity update failed.
+                print("⚠️ Opportunity update failed. Starting rollback...")
+
+                let rollbackBody: [String: Any] = [
+                    "Opportunity__c": NSNull(),
+                    "Unit_Status__c": "Released",
+                    "Unit_Hold_Date__c": NSNull()
+                ]
+
+                print("========== ROLLBACK REQUEST ==========")
+                print("Object: Unit_Inventory__c")
+                print("Record ID:", unitId)
+                print("Body:", rollbackBody)
+                print("======================================")
+
+                // STEP 4: Roll back Unit Inventory.
                 self.projectWebServices.updateRecord(
-                    objectName: "Opportunity__c",
-                    recordId: opportunityId,
-                    body: opportunityBody
-                ) { success, errorMessage in
+                    objectName: "Unit_Inventory__c",
+                    recordId: unitId,
+                    body: rollbackBody
+                ) { [weak self] rollbackSuccess, rollbackError in
+
+                    guard let self = self else {
+                        print("❌ Self is nil during rollback callback")
+                        return
+                    }
+
+                    print("========== ROLLBACK RESULT ==========")
+                    print("Success:", rollbackSuccess)
+                    print("Error:", rollbackError ?? "nil")
+                    print("=====================================")
 
                     DispatchQueue.main.async {
 
                         SwiftLoader.hide()
 
-                        if success {
+                        if rollbackSuccess {
 
-                            self.unitDetails?.unitStatus = "Hold"
+                            self.unitDetails?.unitStatus = "Released"
 
-                            if let unitId = self.unitDetails?.id {
-                                self.onUnitBlocked?(unitId)
-                            }
-
-                            self.view.makeToast("Unit blocked successfully")
-                            self.dismissSheet()
-//                            self.navigationController?.popViewController(animated: true)
+                            print("✅ Unit Inventory rollback successful")
 
                         } else {
 
-                            self.showErrorAndDismiss(
-                                unitError ?? "Failed to update Unit"
+                            print(
+                                "❌ Unit Inventory rollback failed:",
+                                rollbackError ?? "Unknown error"
                             )
                         }
+                 print("opportunityError opportunityError\(opportunityError)")
+                        
+                        self.view.makeToast( opportunityError ?? "Failed to update Opportunity")
                     }
                 }
-
-            } else {
-
-                DispatchQueue.main.async {
-
-                    SwiftLoader.hide()
-
-                    self.showErrorAndDismiss(
-                        unitError ?? "Failed to update Opportunity"
-                    )
-                }
             }
+            
+            // STEP 2: Update Opportunity
+//            self.projectWebServices.updateRecord(
+//                objectName: "Opportunity__c",
+//                recordId: opportunityId,
+//                body: opportunityBody
+//            ) { [weak self] opportunitySuccess, opportunityError in
+//                
+//                guard let self = self else { return }
+//                
+//                // Opportunity update succeeded: blocking completed.
+//                if opportunitySuccess {
+//                    
+//                    DispatchQueue.main.async {
+//                        SwiftLoader.hide()
+//                        
+//                        self.unitDetails?.unitStatus = "Hold"
+//                        self.onUnitBlocked?(unitId)
+//                        
+//                        self.view.makeToast("Unit blocked successfully")
+//                        self.dismissSheet()
+//                    }
+//                    
+//                    return
+//                }
+//                
+//                // STEP 3: Opportunity update failed.
+//                // STEP 4: Roll back Unit Inventory to Released.
+//                let rollbackBody: [String: Any] = [
+//                    "Opportunity__c": "",
+//                    "Unit_Status__c": "Released",
+//                    "Unit_Hold_Date__c": NSNull()
+//                ]
+//                print("rollbackBody rollbackBody \(rollbackBody)")
+//                
+//                self.projectWebServices.updateRecord(
+//                    objectName: "Unit_Inventory__c",
+//                    recordId: unitId,
+//                    body: rollbackBody
+//                ) { [weak self] rollbackSuccess, rollbackError in
+//                    
+//                    guard let self = self else { return }
+//                    
+//                    DispatchQueue.main.async {
+//                        
+//                        SwiftLoader.hide()
+//                        
+//                        if rollbackSuccess {
+//                            self.unitDetails?.unitStatus = "Released"
+//                        } else {
+//                            print(
+//                                "Unit Inventory rollback failed: " +
+//                                (rollbackError ?? "Unknown error")
+//                            )
+//                        }
+//                        
+//                        // Display the original Opportunity validation error.
+//                        self.showErrorAndDismiss(
+//                            opportunityError ??
+//                            "Failed to update Opportunity"
+//                        )
+//                    }
+//                }
+//            }
         }
     }
         

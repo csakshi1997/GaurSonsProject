@@ -156,6 +156,8 @@ class DetailVC: UIViewController {
     var isDataUpdated: Bool = false
     var EOIID: String = EMPTY
     var applicantDetailsModel = ApplicantDetailsModel(dict: [:])
+    private var isFetchingEOIAfterTimerExpires = false
+    private var hasHandledTimerExpiration = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -245,29 +247,112 @@ class DetailVC: UIViewController {
                 print("EOI ID: \(updatedEOI.id ?? "")")
                 print("Minutes: \(updatedEOI.project?.minutesToReleaseUnits ?? 0)")
 
-                // Now start countdown using updated model
+                self.hasHandledTimerExpiration = false
                 self.startCountdown()
             }
         })
     }
-    
+            
+    func fetchEOIDetailsAfterTimerExpires() {
+        print("🚀 ENTERED fetchEOIDetailsAfterTimerExpires()")
 
-//    func fetchApprovalData() {
-//        Utility.getAllApprovalRecords(oppId: EOiModelDict.id ?? EMPTY) { success in
-//            if success {
-//                DispatchQueue.main.async {
-//                    self.filteredApprovalRecord = GlobalData.allApprovalModel
-//                    self.approvalArr = GlobalData.allApprovalModel
-//                    self.totalApprovalLbl?.text = "Approval History (\(self.approvalArr.count))"
-//                    if self.filteredApprovalRecord.count > 0 {
-//                        self.approvalTableView?.reloadData()
-//                    }
-//                }
-//            }
-//        }
-//    }
-    
-    
+        guard !isFetchingEOIAfterTimerExpires else {
+            print("⚠️ EOI refresh already in progress")
+            return
+        }
+
+        let opportunityId = EOIID
+
+        guard !opportunityId.isEmpty else {
+            print("❌ Opportunity ID is missing")
+            return
+        }
+
+        isFetchingEOIAfterTimerExpires = true
+
+        print("⏰ Timer expired. Fetching EOI details for: \(opportunityId)")
+
+        EOIWebServices().getEOIDetails(opportunityId: opportunityId) { [weak self] error, response, status in
+
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+
+                // Always reset the fetching flag when the request completes.
+                self.isFetchingEOIAfterTimerExpires = false
+
+                guard status == .success,
+                      let response = response,
+                      let records = response["records"] as? [[String: Any]],
+                      let record = records.first else {
+
+                    print("❌ Failed to fetch EOI details: \(error ?? "No record found")")
+                    return
+                }
+
+                let updatedEOI = EOIModel(dict: record)
+                self.EOiModelDict = updatedEOI
+
+                print("🔵 Before fetchPropertyData")
+                self.fetchPropertyData()
+                print("🟢 After fetchPropertyData")
+
+                print("🔵 Before chnageButtonUI")
+                self.chnageButtonUI()
+                print("🟢 After chnageButtonUI")
+
+                print("🔵 Before initialUIForDetail")
+                self.initialUIForDetail()
+                print("🟢 After initialUIForDetail")
+
+                print("🔵 Before setupProjectInformationView")
+                self.setupProjectInformationView()
+                print("🟢 After setupProjectInformationView")
+
+                print("🔵 Before topCollectionView.reloadData")
+                self.topCollectionView.reloadData()
+                print("🟢 After topCollectionView.reloadData")
+
+                print("✅ EOI details and button UI updated successfully")
+
+                print("✅ EOI details and button UI updated successfully")
+
+                guard let holdTime = updatedEOI.Unit_Hold_Date_Time__c,
+                      let releaseMinutes = updatedEOI.project?.minutesToReleaseUnits else {
+
+                    self.hideCountdownTimer()
+                    print("⚠️ Hold time or release duration is missing.")
+                    return
+                }
+
+                let formatter = DateFormatter()
+                formatter.locale = Locale(identifier: "en_US_POSIX")
+                formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
+                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+
+                // Intentionally ignore the API timezone suffix, per your requirement.
+                let dateString = String(holdTime.prefix(23))
+
+                guard let holdDate = formatter.date(from: dateString) else {
+                    self.hideCountdownTimer()
+                    print("⚠️ Unable to parse hold time: \(holdTime)")
+                    return
+                }
+
+                let releaseDate = holdDate.addingTimeInterval(releaseMinutes * 60)
+
+                if releaseDate > Date() {
+                    // A valid future release time exists.
+                    self.hasHandledTimerExpiration = false
+                    self.startCountdown()
+                } else {
+                    // The hold time is still expired.
+                    self.hideCountdownTimer()
+                    print("ℹ️ Hold time is expired. Countdown will not restart.")
+                }
+            }
+        }
+    }
+        
     func fetchApprovalData() {
         Utility.getAllApprovalRecords(oppId: EOiModelDict.id ?? EMPTY) { success in
             if success {
@@ -315,83 +400,7 @@ class DetailVC: UIViewController {
             }
         }
     }
-    
-//    func fetchAllFiles() {
-//        GlobalData.allContentDocModel.removeAll()
-//        DispatchQueue.main.async {
-//            self.loaderView?.startAnimating()
-//            self.fileTableView?.isHidden = true
-//            self.noDataFoundVw?.isHidden = true
-//        }
-//        
-//        Utility.getAllContentDoc(oppId: EOiModelDict.id ?? EMPTY) { success in
-//            if success {
-//                let contentDocs = GlobalData.allContentDocModel
-//                DispatchQueue.main.async {
-//                    self.totalFileLbl?.text = "Files (\(contentDocs.count))"
-//                }
-//                guard contentDocs.count > 0 else {
-//                    DispatchQueue.main.async {
-//                        self.loaderView?.stopAnimating()
-////                        self.noDataFoundVw?.isHidden = false
-//                        self.fileTableView?.isHidden = true
-//                    }
-//                    return
-//                }
-//                
-//                var tempFileArray: [FileModel] = []
-//                let dispatchGroup = DispatchGroup()
-//                for content in contentDocs {
-//                    dispatchGroup.enter()
-//                    Utility.getVersionData(contentDocId: content.contentDocumentId ?? EMPTY) { versionSuccess in
-//                        if let versionId = GlobalData.allVersionDataModel.Id {
-//                            Utility.getFileData(contentVersionId: versionId) { fileData in
-//                                if let data = fileData {
-//                                    let fileName = "\(versionId).pdf"
-//                                    let fileModel = FileModel(fileName: fileName, fileData: data)
-//                                    tempFileArray.append(fileModel)
-//                                }
-//                                dispatchGroup.leave()
-//                            }
-//                        } else {
-//                            dispatchGroup.leave()
-//                        }
-//                    }
-//                }
-//                dispatchGroup.notify(queue: .main) {
-//                    self.loaderView?.stopAnimating()
-//                    self.fileArray = tempFileArray
-//                    self.totalFileLbl?.text = "Files (\(self.fileArray.count))"
-//
-//                        if self.selectedIndex < self.menuArr.count,
-//
-//                           self.menuArr[self.selectedIndex] == "Files" {
-//
-//                            self.manageScreen(index: self.selectedIndex)
-//
-//                        }
-////                    self.fileHeaderView?.isHidden = false
-////                    if self.fileArray.count > 0 {
-////                        self.noDataFoundVw?.isHidden = true
-////                        self.fileTableView?.isHidden = false
-////                        self.tableViewsHeader?.isHidden = false
-////                        self.fileTableView?.reloadData()
-////                    } else {
-////                        self.tableViewsHeader?.isHidden = true
-////                        self.noDataFoundVw?.isHidden = false
-////                        self.fileTableView?.isHidden = true
-////                    }
-//                }
-//            } else {
-//                DispatchQueue.main.async {
-//                    self.loaderView?.stopAnimating()
-////                    self.noDataFoundVw?.isHidden = false
-////                    self.fileTableView?.isHidden = true
-//                }
-//            }
-//        }
-//    }
-    
+        
     func fetchAllFiles() {
         GlobalData.allContentDocModel.removeAll()
 
@@ -486,10 +495,7 @@ class DetailVC: UIViewController {
         }
     }
     
-    func setUpUI() {
-        initialUIForDetail()
-        setupProjectInformationView()
-        addNewBtn?.backgroundColor = ColorConstant.primaryRedishColor
+    func chnageButtonUI() {
         if EOiModelDict.recordTypeName == "Legacy" {
             Defaults.isFromEOI = false
             menuArr = [
@@ -567,6 +573,13 @@ class DetailVC: UIViewController {
             eventUrlStackHeight?.constant = 13.33
             bookedOflinePaymentNotApprovedStackHeight?.constant = 60
         }
+    }
+    
+    func setUpUI() {
+        initialUIForDetail()
+        setupProjectInformationView()
+        addNewBtn?.backgroundColor = ColorConstant.primaryRedishColor
+        chnageButtonUI()
         view.layoutIfNeeded()
         topCollectionView?.reloadData()
         paymentSearchVw?.delegate = self
@@ -722,38 +735,6 @@ class DetailVC: UIViewController {
                 "value": projectName
             ])
         }
-        
-        // Alternate Project 1
-        //        if let alternateProject1 = EOiModelDict.alternateProject1,
-        //           !alternateProject1.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        //
-        //            projectList.append([
-        //                "title": "Alternate Project 1",
-        //                "value": alternateProject1
-        //            ])
-        //        }
-        //
-        //        // Alternate Project 2
-        //        if let alternateProject2 = EOiModelDict.alternateProject2,
-        //           !alternateProject2.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        //
-        //            projectList.append([
-        //                "title": "Alternate Project 2",
-        //                "value": alternateProject2
-        //            ])
-        //        }
-        //
-        //        // Alternate Project 3
-        //        if let alternateProject3 = EOiModelDict.alternateProject3,
-        //           !alternateProject3.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        //
-        //            projectList.append([
-        //                "title": "Alternate Project 3",
-        //                "value": alternateProject3
-        //            ])
-        //        }
-        
-        // Create UI
         for item in projectList {
             
             let horizontalStack = UIStackView()
@@ -1281,6 +1262,172 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
         }
     }
         
+//    func startCountdown() {
+//
+//        guard let holdTimeString = EOiModelDict.Unit_Hold_Date_Time__c,
+//              let releaseMinutes = EOiModelDict.project?.minutesToReleaseUnits else {
+//
+//            hideCountdownTimer()
+//            return
+//        }
+//
+//        let formatter = DateFormatter()
+//        formatter.locale = Locale(identifier: "en_US_POSIX")
+//        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
+//        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+//
+//        // Example:
+//        // 2026-05-26T11:58:15.000+0000
+//        //
+//        // We intentionally ignore +0000 because your requirement
+//        // treats 11:58:15 as India/local time.
+//
+//        let apiDateWithoutTimezone = String(holdTimeString.prefix(23))
+//
+//        guard let holdDate = formatter.date(
+//            from: apiDateWithoutTimezone
+//        ) else {
+//
+//            print("❌ Invalid hold date:", holdTimeString)
+//            hideCountdownTimer()
+//            return
+//        }
+//
+//        // Hold time + minutesToReleaseUnits
+//        let releaseDate = holdDate.addingTimeInterval(
+//            releaseMinutes * 60
+//        )
+//
+//        // Get CURRENT INDIA TIME
+//        let currentIndiaString = formatter.string(from: Date())
+//
+//        guard let currentIndiaDate = formatter.date(
+//            from: currentIndiaString
+//        ) else {
+//
+//            hideCountdownTimer()
+//            return
+//        }
+//
+//        let remainingSeconds =
+//            releaseDate.timeIntervalSince(currentIndiaDate)
+//
+//        print("========== TIMER ==========")
+//        print("API Hold Time :", holdTimeString)
+//        print("Hold Time     :", formatter.string(from: holdDate))
+//        print("Release Time  :", formatter.string(from: releaseDate))
+//        print("Current India :", currentIndiaString)
+//        print("Release Min   :", releaseMinutes)
+//        print("Remaining     :", remainingSeconds)
+//        print("============================")
+//
+//        guard remainingSeconds > 0 else {
+//
+//            countdownTimer?.invalidate()
+//            countdownTimer = nil
+//            totalTimeInSeconds = 0
+//
+//            hideCountdownTimer()
+//
+//            print("⏰ TIMER EXPIRED")
+//            if !hasHandledTimerExpiration {
+//
+//                    hasHandledTimerExpiration = true
+//
+//                    fetchEOIDetailsAfterTimerExpires()
+//
+//                }
+//            return
+//        }
+//
+//        totalTimeInSeconds = Int(ceil(remainingSeconds))
+//
+//        Helper.showTimer(
+//            timerHeight: timerHeight,
+//            timerBtn: timerBtn,
+//            timerLeftImgBtn: timerLeftImgBtn,
+//            timer1Lbl: timer1Lbl,
+//            timer2Lbl: timer2Lbl,
+//            view: view
+//        )
+//
+//        updateTimerButtonTitle()
+//
+//        countdownTimer?.invalidate()
+//
+//        countdownTimer = Timer.scheduledTimer(
+//            withTimeInterval: 1.0,
+//            repeats: true
+//        ) { [weak self] timer in
+//
+//            guard let self = self else {
+//                timer.invalidate()
+//                return
+//            }
+//
+//            let currentIndiaString = formatter.string(from: Date())
+//
+//            guard let currentIndiaDate = formatter.date(
+//                from: currentIndiaString
+//            ) else {
+//                return
+//            }
+//
+//            let remaining =
+//                releaseDate.timeIntervalSince(currentIndiaDate)
+//
+//            if remaining > 0 {
+//
+//                self.totalTimeInSeconds = Int(ceil(remaining))
+//                self.updateTimerButtonTitle()
+//
+////            } else {
+////
+////                timer.invalidate()
+////                self.countdownTimer = nil
+////
+////                self.totalTimeInSeconds = 0
+////
+////                self.hideCountdownTimer()
+////
+////                print("⏰ TIMER FINISHED")
+////                if !self.hasHandledTimerExpiration {
+////
+////                        self.hasHandledTimerExpiration = true
+////
+////                        self.fetchEOIDetailsAfterTimerExpires()
+////
+////                    }
+////
+////                
+////            }
+//            } else {
+//                timer.invalidate()
+//                self.countdownTimer = nil
+//                self.totalTimeInSeconds = 0
+//                self.hideCountdownTimer()
+//
+//                print("⏰ TIMER FINISHED")
+//                print("hasHandledTimerExpiration:", self.hasHandledTimerExpiration)
+//                print("isFetchingEOIAfterTimerExpires:", self.isFetchingEOIAfterTimerExpires)
+//
+//                if !self.hasHandledTimerExpiration {
+//                    self.hasHandledTimerExpiration = true
+//
+//                    print("✅ Calling fetchEOIDetailsAfterTimerExpires()")
+//                    self.fetchEOIDetailsAfterTimerExpires()
+//                } else {
+//                    print("⚠️ Timer expiration already handled; skipping duplicate call")
+//                }
+//            }
+//        }
+//
+//        RunLoop.main.add(
+//            countdownTimer!,
+//            forMode: .common
+//        )
+//    }
+    
     func startCountdown() {
 
         guard let holdTimeString = EOiModelDict.Unit_Hold_Date_Time__c,
@@ -1290,55 +1437,71 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
             return
         }
 
+        // Salesforce sends the hold time in UTC.
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 
-        // Example:
-        // 2026-05-26T11:58:15.000+0000
-        //
-        // We intentionally ignore +0000 because your requirement
-        // treats 11:58:15 as India/local time.
+        // Supports:
+        // 2026-10-22T11:36:00.000+0000
+        // 2026-10-22T11:36:00.000Z
+        // 2026-10-22T11:36:00.000
+        let holdDate: Date?
 
-        let apiDateWithoutTimezone = String(holdTimeString.prefix(23))
+        if let date = formatter.date(from: holdTimeString) {
+            holdDate = date
+        } else {
 
-        guard let holdDate = formatter.date(
-            from: apiDateWithoutTimezone
-        ) else {
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+
+            if let date = formatter.date(from: holdTimeString) {
+                holdDate = date
+            } else {
+
+                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+
+                if let date = formatter.date(from: holdTimeString) {
+                    holdDate = date
+                } else {
+
+                    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+
+                    holdDate = formatter.date(from: holdTimeString)
+                }
+            }
+        }
+
+        guard let holdDate = holdDate else {
 
             print("❌ Invalid hold date:", holdTimeString)
             hideCountdownTimer()
             return
         }
 
-        // Hold time + minutesToReleaseUnits
+        // Convert UTC hold time to IST for display.
+        let istFormatter = DateFormatter()
+        istFormatter.locale = Locale(identifier: "en_US_POSIX")
+        istFormatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
+        istFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+        // Release time = hold time + configured release minutes.
         let releaseDate = holdDate.addingTimeInterval(
             releaseMinutes * 60
         )
 
-        // Get CURRENT INDIA TIME
-        let currentIndiaString = formatter.string(from: Date())
-
-        guard let currentIndiaDate = formatter.date(
-            from: currentIndiaString
-        ) else {
-
-            hideCountdownTimer()
-            return
-        }
-
-        let remainingSeconds =
-            releaseDate.timeIntervalSince(currentIndiaDate)
+        // Date() represents the current instant.
+        // No manual timezone conversion is needed for comparison.
+        let remainingSeconds = releaseDate.timeIntervalSince(Date())
 
         print("========== TIMER ==========")
-        print("API Hold Time :", holdTimeString)
-        print("Hold Time     :", formatter.string(from: holdDate))
-        print("Release Time  :", formatter.string(from: releaseDate))
-        print("Current India :", currentIndiaString)
-        print("Release Min   :", releaseMinutes)
-        print("Remaining     :", remainingSeconds)
-        print("============================")
+        print("API Hold Time (UTC):", holdTimeString)
+        print("Hold Time (IST):", istFormatter.string(from: holdDate))
+        print("Release Time (IST):", istFormatter.string(from: releaseDate))
+        print("Current Time (IST):", istFormatter.string(from: Date()))
+        print("Release Minutes:", releaseMinutes)
+        print("Remaining Seconds:", remainingSeconds)
+        print("===========================")
 
         guard remainingSeconds > 0 else {
 
@@ -1349,6 +1512,11 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
             hideCountdownTimer()
 
             print("⏰ TIMER EXPIRED")
+
+            if !hasHandledTimerExpiration {
+                hasHandledTimerExpiration = true
+                fetchEOIDetailsAfterTimerExpires()
+            }
 
             return
         }
@@ -1378,16 +1546,7 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
                 return
             }
 
-            let currentIndiaString = formatter.string(from: Date())
-
-            guard let currentIndiaDate = formatter.date(
-                from: currentIndiaString
-            ) else {
-                return
-            }
-
-            let remaining =
-                releaseDate.timeIntervalSince(currentIndiaDate)
+            let remaining = releaseDate.timeIntervalSince(Date())
 
             if remaining > 0 {
 
@@ -1398,12 +1557,18 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
 
                 timer.invalidate()
                 self.countdownTimer = nil
-
                 self.totalTimeInSeconds = 0
 
                 self.hideCountdownTimer()
 
                 print("⏰ TIMER FINISHED")
+
+                if !self.hasHandledTimerExpiration {
+
+                    self.hasHandledTimerExpiration = true
+
+                    self.fetchEOIDetailsAfterTimerExpires()
+                }
             }
         }
 
@@ -1412,7 +1577,7 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
             forMode: .common
         )
     }
-    
+        
     private func hideCountdownTimer() {
 
         Helper.hideTimer(
@@ -1424,123 +1589,6 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
             view: view
         )
     }
-    
-//    func startCountdown() {
-//
-//        guard let holdTimeString = EOiModelDict.Unit_Hold_Date_Time__c,
-//              let releaseMinutes = EOiModelDict.project?.minutesToReleaseUnits else {
-//
-//            Helper.hideTimer(
-//                timerHeight: timerHeight,
-//                timerBtn: timerBtn,
-//                timerLeftImgBtn: timerLeftImgBtn,
-//                timer1Lbl: timer1Lbl,
-//                timer2Lbl: timer2Lbl,
-//                view: view
-//            )
-//            return
-//        }
-//
-//        // API date is UTC: 2026-08-13T12:55:49.000+0000
-//        let formatter = DateFormatter()
-//        formatter.locale = Locale(identifier: "en_US_POSIX")
-//        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-//        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-//
-//        guard let holdDate = formatter.date(from: holdTimeString) else {
-//            print("❌ Invalid hold date:", holdTimeString)
-//            return
-//        }
-//
-//        // minutesToReleaseUnits = 2 means 2 minutes
-//        let releaseDate = holdDate.addingTimeInterval(
-//            releaseMinutes * 60
-//        )
-//
-//        // Date() is an absolute current timestamp.
-//        // Timezone does NOT need to be manually added.
-//        let remainingSeconds = releaseDate.timeIntervalSinceNow
-//
-//        print("========== TIMER ==========")
-//        print("Hold UTC    :", holdDate)
-//        print("Release UTC :", releaseDate)
-//        print("Now         :", Date())
-//        print("Remaining   :", remainingSeconds)
-//        print("============================")
-//
-//        // Already expired
-//        guard remainingSeconds > 0 else {
-//
-//            countdownTimer?.invalidate()
-//            countdownTimer = nil
-//            totalTimeInSeconds = 0
-//
-//            Helper.hideTimer(
-//                timerHeight: timerHeight,
-//                timerBtn: timerBtn,
-//                timerLeftImgBtn: timerLeftImgBtn,
-//                timer1Lbl: timer1Lbl,
-//                timer2Lbl: timer2Lbl,
-//                view: view
-//            )
-//
-//            print("⏰ Timer already expired")
-//            return
-//        }
-//
-//        // Show timer
-//        Helper.showTimer(
-//            timerHeight: timerHeight,
-//            timerBtn: timerBtn,
-//            timerLeftImgBtn: timerLeftImgBtn,
-//            timer1Lbl: timer1Lbl,
-//            timer2Lbl: timer2Lbl,
-//            view: view
-//        )
-//
-//        countdownTimer?.invalidate()
-//
-//        countdownTimer = Timer.scheduledTimer(
-//            withTimeInterval: 1.0,
-//            repeats: true
-//        ) { [weak self] timer in
-//
-//            guard let self = self else {
-//                timer.invalidate()
-//                return
-//            }
-//
-//            let remaining = releaseDate.timeIntervalSinceNow
-//
-//            if remaining > 0 {
-//
-//                self.totalTimeInSeconds = Int(ceil(remaining))
-//                self.updateTimerButtonTitle()
-//
-//            } else {
-//
-//                timer.invalidate()
-//                self.countdownTimer = nil
-//                self.totalTimeInSeconds = 0
-//
-//                Helper.hideTimer(
-//                    timerHeight: self.timerHeight,
-//                    timerBtn: self.timerBtn,
-//                    timerLeftImgBtn: self.timerLeftImgBtn,
-//                    timer1Lbl: self.timer1Lbl,
-//                    timer2Lbl: self.timer2Lbl,
-//                    view: self.view
-//                )
-//
-//                print("⏰ TIMER EXPIRED")
-//            }
-//        }
-//
-//        RunLoop.main.add(
-//            countdownTimer!,
-//            forMode: .common
-//        )
-//    }
     
     func updateTimerButtonTitle() {
 

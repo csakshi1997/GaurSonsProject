@@ -95,6 +95,108 @@ class EOIWebServices {
     }
     
     
+    func getEOIDetails(
+        opportunityId: String,
+        outerClosure: @escaping ((String?, [String: Any]?, ResponseStatus) -> ())
+    ) {
+        Task {
+            let soqlQuery = """
+            SELECT Id, Name, Opportunity_ID__c, RecordTypeId, RecordType.Id, RecordType.Name,
+            Applicant_Type__c, Email__c, MobilePhone__c, Application_Number__c,
+            Carpet_Area__c, Priority_Number__c, Priority_Number_R__c,
+            Total_Payment_Amount__c, EOI_Payment_Submission_Date__c, Terrace_Area__c,
+            Total_Price_List_Amount__c, Total_Payment_Detail__c, Total_Amount_InclGST__c,
+            Booked__c, IsOfflineEOIForm__c, Payment_Not_Approved__c, Is_Deviated__c,
+            Price_List_Deviated__c, EOI_Tentative_Price_Range__c, EOI_Saleable_Area__c,
+            Project__c, First_Preference__c, Second_Preference__c, third_Preference__c,
+            Submitted_By__c, Channel_Partner__c, Channel_Partner_Agent_Name__c,
+            Channel_Partner_Mobile_No__c, Approval_Status__c, Approval_Stage__c,
+            Approval_Condition__c, Application_Date__c, Booking_Date__c,
+            Booking_Number__c, Booking_Status__c, Document_Id__c, NRI_Status__c,
+            Company__c, Company_Name__c, Company_Email_ID__c, Company_Mobile_Number__c,
+            Company_GST_Number__c, Company_Registration_Number__c, PAN_Number__c,
+            CIN_Number__c, TAN_Number__c, TIN_Number__c, CST_Number__c, Event_URL__c,
+            Event_Venue__c, Event_Date__c, Super_Area__c, Build_Up_Area__c, Plot_Area__c,
+            Tower_Block_Name__c, Floor_Number__c, Tentative_Budget_Amount__c, Budget__c,
+            Lead_Source__c, Lead_Sub_Source__c, Inventory_Status__c, Stage__c,
+            CreatedDate, Unit_Hold_Date_Time__c, RM_Name__c, RM_Name__r.Id, RM_Name__r.Name,
+            Project__r.Id, Project__r.Name, Project__r.CreatedDate,
+            Project__r.Minutes_to_Release_Units__c,
+            Project__r.Easebuzz_Sub_Merchant_Id__c,
+            Project__r.Channel_Partner_Visible__c,
+            CreatedBy.Id, CreatedBy.Name
+            FROM Opportunity__c
+            WHERE Id = '\(opportunityId)'
+            ORDER BY CreatedDate DESC
+            """
+
+            guard let instanceUrl = Defaults.instanceUrl else {
+                DispatchQueue.main.async {
+                    outerClosure("Invalid instance URL", nil, .error)
+                }
+                return
+            }
+
+            let request = RestClient.shared.request(
+                forQuery: soqlQuery,
+                apiVersion: "v62.0"
+            )
+
+            do {
+                let response = try await RestClient.shared.send(request: request)
+
+                if let urlResponse = response.urlResponse as? HTTPURLResponse {
+                    let statusCode = urlResponse.statusCode
+                    print("HTTP Status Code: \\(statusCode)")
+
+                    if statusCode == 401 {
+                        DispatchQueue.main.async {
+                            Utility.logoutAction()
+                            outerClosure(
+                                "Unauthorized. Redirecting to login.",
+                                nil,
+                                .tokenExpired
+                            )
+                        }
+                        return
+                    }
+                }
+
+                if let jsonObject = try response.asJson() as? [String: Any] {
+                    DispatchQueue.main.async {
+                        outerClosure(nil, jsonObject, .success)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        outerClosure("Invalid JSON format", nil, .error)
+                    }
+                }
+
+            } catch {
+                print("API Error:", error)
+
+                if let apiError = error as? RestClientError,
+                   case let .apiFailed(_, _, urlResponse) = apiError,
+                   let httpResponse = urlResponse as? HTTPURLResponse,
+                   httpResponse.statusCode == 401 {
+
+                    DispatchQueue.main.async {
+                        Utility.logoutAction()
+                        outerClosure(
+                            "Session expired. Please login again.",
+                            nil,
+                            .tokenExpired
+                        )
+                    }
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    outerClosure(error.localizedDescription, nil, .error)
+                }
+            }
+        }
+    }
     
     
     func getAllEOI(

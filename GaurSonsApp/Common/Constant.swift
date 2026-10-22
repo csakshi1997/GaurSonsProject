@@ -25,6 +25,7 @@ var onTrade : String = "SELECT Value,Label,IsActive FROM PicklistValueInfo WHERE
 
 #if DEBUG
 //let kLoginHost = "nosoftware-page-2575--dev.sandbox.my.site.com/GaurBrokerPortal"
+var ownerId = "005ft0000001lBNAAY"
 let kLoginHost = "gaursons--uat.sandbox.my.site.com/GaurBrokerPortal"
 //UAT Key
 //let ApiKey = "c8ef3d2a8f654ca2b67c24e9256c51df"
@@ -46,6 +47,7 @@ let verifyPayment = "https://gaursons--dev2.sandbox.my.salesforce.com/services/a
 
 
 #else
+var ownerId = "005fv000006QBagAAG"
 let kLoginHost = "gaursons.my.site.com/GaurBrokerPortal"
 //let kLoginHost = "gaursons.my.site.com/GaurBrokerPortal/s"
 let ApiKey = "def3c18bb9d6746771f3dcd333f985c8"
