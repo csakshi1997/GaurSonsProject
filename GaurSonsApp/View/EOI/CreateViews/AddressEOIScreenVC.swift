@@ -615,56 +615,134 @@ class AddressEOIScreenVC: UIViewController {
         }
     }
     
+//    private func populateAddressFromCustomer() {
+//        guard let customer = cuatomerDetailsDict else {
+//            print("❌ Customer details are nil")
+//            return
+//        }
+//
+//        // Build the address using the customer response.
+//        let address: String
+//
+//        if let completeAddress = customer.completeAddress,
+//           !completeAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+//           completeAddress.caseInsensitiveCompare("<null>") != .orderedSame {
+//
+//            address = completeAddress
+//
+//        } else {
+//            let addressParts = [
+//                customer.house,
+//                customer.street,
+//                customer.landmark,
+//                customer.vtc,
+//                customer.postOffice,
+//                customer.district
+//            ]
+//            .compactMap { $0 }
+//            .filter {
+//                let value = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+//                return !value.isEmpty &&
+//                       value.caseInsensitiveCompare("<null>") != .orderedSame
+//            }
+//
+//            address = addressParts.joined(separator: ", ")
+//        }
+//
+//        let country = customer.country ?? ""
+//        let state = customer.state ?? ""
+//        let city = customer.district ?? ""
+//        let pincode = customer.pincode ?? ""
+//
+//        DispatchQueue.main.async {
+//            if self.isIndividualApplicantFlow {
+//                // Individual applicant: Permanent Address
+//                self.permanentAddresstxtFld?.text = address
+//                self.permanentCountrytxtFld?.text = country
+//                self.permanentStatetxtFld?.text = state
+//                self.permanentCitytxtFld?.text = city
+//                self.permanentPincodetxtFld?.text = pincode
+//
+//            } else {
+//                // Non-individual applicant: Registered Address
+//                self.registerAddresstxtFld?.text = address
+//                self.registerCountrytxtFld?.text = country
+//                self.registerStatetxtFld?.text = state
+//                self.registerCitytxtFld?.text = city
+//                self.registerPincodetxtFld?.text = pincode
+//            }
+//
+//            print("✅ Customer address populated")
+//            print("🌍 Country: \(country)")
+//            print("📍 Address: \(address)")
+//            print("🏙️ State: \(state)")
+//            print("🏙️ City: \(city)")
+//            print("📮 Pincode: \(pincode)")
+//        }
+//    }
+    
     private func populateAddressFromCustomer() {
         guard let customer = cuatomerDetailsDict else {
             print("❌ Customer details are nil")
             return
         }
 
-        // Build the address using the customer response.
-        let address: String
-
-        if let completeAddress = customer.completeAddress,
-           !completeAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-           completeAddress.caseInsensitiveCompare("<null>") != .orderedSame {
-
-            address = completeAddress
-
-        } else {
-            let addressParts = [
-                customer.house,
-                customer.street,
-                customer.landmark,
-                customer.vtc,
-                customer.postOffice,
-                customer.district
-            ]
-            .compactMap { $0 }
-            .filter {
-                let value = $0.trimmingCharacters(in: .whitespacesAndNewlines)
-                return !value.isEmpty &&
-                       value.caseInsensitiveCompare("<null>") != .orderedSame
+        // Convert nil, empty, "null", and "<null>" values to empty strings.
+        func cleanValue(_ value: String?) -> String {
+            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !value.isEmpty,
+                  value.caseInsensitiveCompare("null") != .orderedSame,
+                  value.caseInsensitiveCompare("<null>") != .orderedSame else {
+                return ""
             }
 
-            address = addressParts.joined(separator: ", ")
+            return value
         }
 
-        let country = customer.country ?? ""
-        let state = customer.state ?? ""
-        let city = customer.district ?? ""
-        let pincode = customer.pincode ?? ""
+        // Clean individual address components.
+        let house = cleanValue(customer.house)
+        let street = cleanValue(customer.street)
+        let landmark = cleanValue(customer.landmark)
+        let vtc = cleanValue(customer.vtc)
+        let postOffice = cleanValue(customer.postOffice)
+        let district = cleanValue(customer.district)
+
+        // Use complete address if available; otherwise build it.
+        let completeAddress = cleanValue(customer.completeAddress)
+
+        let address: String
+
+        if !completeAddress.isEmpty {
+            address = completeAddress
+        } else {
+            address = [
+                house,
+                street,
+                landmark,
+                vtc,
+                postOffice,
+                district
+            ]
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+        }
+
+        // Clean country, state, city, and pincode.
+        let country = cleanValue(customer.country)
+        let state = cleanValue(customer.state)
+        let city = cleanValue(customer.district)
+        let pincode = cleanValue(customer.pincode)
 
         DispatchQueue.main.async {
             if self.isIndividualApplicantFlow {
-                // Individual applicant: Permanent Address
+                // Individual applicant: Populate Permanent Address.
                 self.permanentAddresstxtFld?.text = address
                 self.permanentCountrytxtFld?.text = country
                 self.permanentStatetxtFld?.text = state
                 self.permanentCitytxtFld?.text = city
                 self.permanentPincodetxtFld?.text = pincode
-
             } else {
-                // Non-individual applicant: Registered Address
+                // Non-individual applicant: Populate Registered Address.
                 self.registerAddresstxtFld?.text = address
                 self.registerCountrytxtFld?.text = country
                 self.registerStatetxtFld?.text = state
@@ -1178,17 +1256,7 @@ class AddressEOIScreenVC: UIViewController {
     }
     
     @IBAction func nextBtnAction() {
-//        guard validateFields() else { return }
-//        var applicant: SaveModel
-//        if let index = applicantIndex {
-//            applicant = OpportunityManager.shared.getApplicant(at: index) ?? SaveModel(dict: [:])
-//        } else {
-//            applicant = SaveModel(dict: [:])
-////            OpportunityManager.shared.addApplicant(applicant)
-//            applicantIndex = OpportunityManager.shared.applicants.count - 1
-//        }
-        
-        
+        guard validateFields() else { return }
         var applicant: SaveModel
 
         if let index = applicantIndex {

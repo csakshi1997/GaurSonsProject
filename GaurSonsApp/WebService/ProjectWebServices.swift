@@ -24,6 +24,15 @@ class ProjectWebServices {
         ORDER BY CreatedDate DESC
         """
             
+//            let soqlQuery = """
+//                SELECT Id, Name, Project_Type__c, Project_Status__c, Project_Code__c,
+//                Total_No_of_Units__c, Total_No_of_Towers__c, Sellable_Area__c,
+//                CreatedDate, CreatedBy.Id, CreatedBy.Name
+//                FROM Project__c
+//                WHERE Channel_Partner_Visible__c = true
+//                ORDER BY CreatedDate DESC
+//                """
+            
             guard let encodedQuery = soqlQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
                   let instanceUrl = Defaults.instanceUrl else {
                 outerClosure("Invalid query or instance URL", nil, .error)
@@ -225,16 +234,27 @@ class ProjectWebServices {
         
         Task {
             
+//            let soqlQuery = """
+//            SELECT Id, Name, Floor_Number__c, Unit_Type__c, Unit_Status__c,
+//            Unit_Number__c, Unit_Typology__c, Facing__c, Builtup_Area__c,
+//            Unit_of_Measurement__c, Property_Type__c,
+//            Tower_Code__r.Id, Tower_Code__r.Name,
+//            Floor_Number__r.Id, Floor_Number__r.Name
+//            FROM Unit_Inventory__c
+//            WHERE Project__c = '\(projectId)'
+//            AND Unit_Status__c IN ('Available', 'Released', 'Hold')
+//            """
+            
             let soqlQuery = """
-            SELECT Id, Name, Floor_Number__c, Unit_Type__c, Unit_Status__c,
-            Unit_Number__c, Unit_Typology__c, Facing__c, Builtup_Area__c,
-            Unit_of_Measurement__c, Property_Type__c,
-            Tower_Code__r.Id, Tower_Code__r.Name,
-            Floor_Number__r.Id, Floor_Number__r.Name
-            FROM Unit_Inventory__c
-            WHERE Project__c = '\(projectId)'
-            AND Unit_Status__c IN ('Available', 'Released', 'Hold')
-            """
+                SELECT Id, Name, Floor_Number__c, Unit_Type__c, Unit_Status__c,
+                Unit_Number__c, Unit_Typology__c, Facing__c, Builtup_Area__c,
+                Sellable_Area__c, Unit_of_Measurement__c, Property_Type__c,
+                Tower_Code__r.Id, Tower_Code__r.Name,
+                Floor_Number__r.Id, Floor_Number__r.Name
+                FROM Unit_Inventory__c
+                WHERE Project__c = '\(projectId)'
+                AND Unit_Status__c IN ('Available', 'Released', 'Hold')
+                """
             
             guard let encodedQuery = soqlQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
                   let instanceUrl = Defaults.instanceUrl else {

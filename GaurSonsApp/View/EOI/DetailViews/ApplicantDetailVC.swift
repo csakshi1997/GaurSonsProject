@@ -135,7 +135,6 @@ class ApplicantDetailVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-       
         Utility.getAllApplicantDetails(applicantId: applicantId) { success in
             self.applicantDetailsModel = GlobalData.allApplicantDetailsModel
             if success {
@@ -164,78 +163,9 @@ class ApplicantDetailVC: UIViewController {
             self.view.layoutIfNeeded()
         }
     }
-    
-//    func fetchAllFiles() {
-//
-//        GlobalData.allContentDocModel.removeAll()
-//        DispatchQueue.main.async {
-//            self.loaderView?.startAnimating()
-//            self.tableView?.isHidden = true
-//            self.noDataFoundVw?.isHidden = true
-//        }
-//        
-//        Utility.getAllContentDoc(oppId: applicantId) { success in
-//            if success {
-//                let contentDocs = GlobalData.allContentDocModel
-//                guard contentDocs.count > 0 else {
-//                    DispatchQueue.main.async {
-//                        self.loaderView?.stopAnimating()
-//                        self.noDataFoundVw?.isHidden = false
-//                        self.tableView?.isHidden = true
-//                    }
-//                    return
-//                }
-//                
-//                var tempFileArray: [FileModel] = []
-//                let dispatchGroup = DispatchGroup()
-//                
-//                for content in contentDocs {
-//                    dispatchGroup.enter()
-//                    Utility.getVersionData(contentDocId: content.contentDocumentId ?? EMPTY) { versionSuccess in
-//                        if let versionId = GlobalData.allVersionDataModel.Id {
-//                            Utility.getFileData(contentVersionId: versionId) { fileData in
-//                                if let data = fileData {
-//                                    let fileName = "\(versionId).pdf"
-//                                    let fileModel = FileModel(fileName: fileName, fileData: data)
-//                                    tempFileArray.append(fileModel)
-//                                }
-//                                dispatchGroup.leave()
-//                            }
-//                        } else {
-//                            dispatchGroup.leave()
-//                        }
-//                    }
-//                }
-//                
-//                dispatchGroup.notify(queue: .main) {
-//                    self.loaderView?.stopAnimating()
-//                    
-//                    self.fileArray = tempFileArray
-//                    self.fileHeaderView?.isHidden = false
-//                    if self.fileArray.count > 0 {
-//                        self.noDataFoundVw?.isHidden = true
-//                        self.tableView?.isHidden = false
-//                        self.tableViewsHeader?.isHidden = false
-//                        self.tableView?.reloadData()
-//                    } else {
-//                        self.tableViewsHeader?.isHidden = true
-//                        self.noDataFoundVw?.isHidden = false
-//                        self.tableView?.isHidden = true
-//                    }
-//                }
-//            } else {
-//                DispatchQueue.main.async {
-//                    self.loaderView?.stopAnimating()
-//                    self.noDataFoundVw?.isHidden = false
-//                    self.tableView?.isHidden = true
-//                }
-//            }
-//        }
-//    }
-    
+        
     func fetchAllFiles() {
 
-        // Create a new request ID
         let requestID = UUID()
         fileRequestID = requestID
         isFileRequestActive = true
@@ -254,7 +184,6 @@ class ApplicantDetailVC: UIViewController {
 
             guard let self = self else { return }
 
-            // Ignore old request
             guard self.fileRequestID == requestID,
                   self.isFileRequestActive else {
                 return
@@ -293,7 +222,6 @@ class ApplicantDetailVC: UIViewController {
 
             for content in contentDocs {
 
-                // Check before starting another API
                 guard self.fileRequestID == requestID,
                       self.isFileRequestActive else {
                     break
@@ -345,8 +273,6 @@ class ApplicantDetailVC: UIViewController {
 
             dispatchGroup.notify(queue: .main) {
 
-                // VERY IMPORTANT:
-                // Do not update UI if user already switched to Detail
                 guard self.fileRequestID == requestID,
                       self.isFileRequestActive else {
                     return
@@ -564,57 +490,21 @@ class ApplicantDetailVC: UIViewController {
         dismissMaskedDataView()
     }
 
-    
-//    @IBAction func uiBtnsAction(_ sender: UIButton) {
-//        detailBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
-//        detailBtn?.backgroundColor = .clear
-//        fileBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
-//        fileBtn?.backgroundColor = .clear
-//        applicantScrollView?.isHidden = true
-//        fileHeaderView?.isHidden = true
-//        tableView?.isHidden = true
-//        tableViewsHeader?.isHidden = true
-//        isDetailEnable = false
-//        if sender.tag == 11 {
-//            detailBtnLbl?.backgroundColor = ColorConstant.primary
-//            //            fileBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
-//            applicantScrollView?.isHidden = false
-//            isDetailEnable = true
-//            noDataFoundVw?.isHidden = true
-//        } else if sender.tag == 12 {
-//            fileBtnLbl?.backgroundColor = ColorConstant.primary
-//            //            detailBtnLbl?.backgroundColor = ColorConstant.buttonBackgroundWhiteColor
-//            fileHeaderView?.isHidden = false
-//            tableView?.isHidden = false
-//            tableViewsHeader?.isHidden = false
-//            isDetailEnable = false
-//            fetchAllFiles()
-//        }
-//    }
-    
     @IBAction func uiBtnsAction(_ sender: UIButton) {
 
-        // MARK: - DETAIL BUTTON
-
         if sender.tag == 11 {
-
-            // Invalidate any running file request
             isFileRequestActive = false
             fileRequestID = UUID()
 
-            // Stop loader
             loaderView?.stopAnimating()
 
-            // Clear file data
             fileArray.removeAll()
 
-            // Reset File UI
             fileHeaderView?.isHidden = true
             tableView?.isHidden = true
             tableViewsHeader?.isHidden = true
             noDataFoundVw?.isHidden = true
 
-            // Show Detail UI
             applicantScrollView?.isHidden = false
             isDetailEnable = true
 
@@ -628,17 +518,13 @@ class ApplicantDetailVC: UIViewController {
         }
 
 
-        // MARK: - FILE BUTTON
 
         if sender.tag == 12 {
 
-            // Mark file request as active
             isFileRequestActive = true
 
-            // Detail UI hide
             applicantScrollView?.isHidden = true
 
-            // File UI
             fileHeaderView?.isHidden = false
             tableViewsHeader?.isHidden = true
             tableView?.isHidden = true
@@ -652,7 +538,6 @@ class ApplicantDetailVC: UIViewController {
             fileBtnLbl?.backgroundColor = ColorConstant.primary
             fileBtn?.backgroundColor = .clear
 
-            // Fetch files
             fetchAllFiles()
 
             return

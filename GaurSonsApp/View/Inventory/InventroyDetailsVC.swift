@@ -852,14 +852,13 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
             .joined(separator: " | ")
         
         let status = (unitDetails?.unitStatus ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        
         let rows: [(String, String)] = [
             ("Unit (Number | Type)", unitName.isEmpty ? "NA" : unitName),
             ("Property Type", displayValue(unitDetails?.propertyType)),
             ("Unit Status", status),
             ("Unit Typology", displayValue(unitDetails?.unitTypology)),
             ("Facing", displayValue(unitDetails?.facing)),
-            ("Build-up Area", formattedArea(unitDetails?.builtupArea)),
+            ("Build-up Area", formattedArea(unitDetails?.sellableArea)),
             ("Unit of Measurement", displayValue(unitDetails?.unitOfMeasurement))
         ]
         
@@ -959,110 +958,7 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
 
         present(alert, animated: true)
     }
-    
-//    private func performBlockUnit() {
-//        guard blockButton.isEnabled else { return }
-//
-//           blockButton.isEnabled = false
-//
-//           blockButton.alpha = 0.5
-//        guard let unitId = unitDetails?.id,
-//              !oppId.isEmpty else {
-//
-//            Utility.showAlert(message: "Required data missing")
-//            return
-//        }
-//
-//        let opportunityId = oppId
-//
-//        let formatter = DateFormatter()
-//        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-//        formatter.timeZone = .current
-//
-//        let currentDateTime = formatter.string(from: Date())
-//
-//        let dateFormatter = DateFormatter()
-//        dateFormatter.dateFormat = "yyyy-MM-dd"
-//
-//        let currentDate = dateFormatter.string(from: Date())
-//
-//        let opportunityBody: [String: Any] = [
-//            "RecordTypeId": Defaults.unsoldRecordTypeId ?? EMPTY,
-//            "Stage__c": "Payment Detail",
-//            "Hold_Counter__c": "1",
-//            "OwnerId": Defaults.userId ?? EMPTY,
-//            "Inventory_Status__c": "Hold",
-//            "Unit_Hold_Date_Time__c": currentDateTime,
-//            "Unit__c": unitId
-//        ]
-//
-//        let unitBody: [String: Any] = [
-//            "Opportunity__c": opportunityId,
-//            "Unit_Status__c": "Hold",
-//            "Unit_Hold_Date__c": currentDate
-//        ]
-//        
-//        print("opportunityBody opportunityBody\(opportunityBody)")
-//        
-//        print("unitBody unitBody\(unitBody)")
-//
-//        SwiftLoader.show(animated: true)
-//
-//        projectWebServices.updateRecord(
-//            objectName: "Unit_Inventory__c",
-//            recordId: unitId,
-//            body: unitBody
-//        ) { [weak self] unitSuccess, unitError in
-//
-//            guard let self = self else { return }
-//
-//            if unitSuccess {
-//
-//                self.projectWebServices.updateRecord(
-//                    objectName: "Opportunity__c",
-//                    recordId: opportunityId,
-//                    body: opportunityBody
-//                ) { success, errorMessage in
-//
-//                    DispatchQueue.main.async {
-//
-//                        SwiftLoader.hide()
-//
-//                        if success {
-//
-//                            self.unitDetails?.unitStatus = "Hold"
-//
-//                            if let unitId = self.unitDetails?.id {
-//                                self.onUnitBlocked?(unitId)
-//                            }
-//
-//                            self.view.makeToast("Unit blocked successfully")
-//                            self.dismissSheet()
-////                            self.navigationController?.popViewController(animated: true)
-//
-//                        } else {
-//
-//                            self.showErrorAndDismiss(
-//                                unitError ?? "Failed to update Unit"
-//                            )
-//                        }
-//                    }
-//                }
-//
-//            } else {
-//
-//                DispatchQueue.main.async {
-//
-//                    SwiftLoader.hide()
-//
-//                    self.showErrorAndDismiss(
-//                        unitError ?? "Failed to update Opportunity"
-//                    )
-//                }
-//            }
-//        }
-//    }
-    
+        
     private func performBlockUnit() {
         
         guard blockButton.isEnabled else { return }

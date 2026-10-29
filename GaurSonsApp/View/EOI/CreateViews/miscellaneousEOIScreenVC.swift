@@ -83,12 +83,11 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpInitialUI()
-        print(cuatomerDetailsDict)
         setCustomerProject()
         fetchProjects()
         Utility.getRecordType(type: Defaults.type ?? EMPTY) { recordTypeId in
             if let id = recordTypeId {
-                print("\(Defaults.type)is : \(id)")
+                print("\(Defaults.type ?? EMPTY)is : \(id)")
                 self.recordTypeId = id
             }
         }
@@ -100,11 +99,42 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
         Task {
             await FetchPicklistValue.shared.fetchPicklistValues(
                 objectName: "Opportunity__c",
-                fieldNames: ["EOI_Saleable_Area__c", "EOI_Tentative_Price_Range__c", "Submitted_By__c", "RM_Name__c"]
+                fieldNames: [
+                    "EOI_Saleable_Area__c",
+                    "EOI_Tentative_Price_Range__c",
+                    "Submitted_By__c",
+                    "RM_Name__c"
+                ]
             )
+
+            await MainActor.run {
+                self.showDefaultSubmittedByValue()
+            }
+        }
+    }
+    
+    func showDefaultSubmittedByValue() {
+        let options = FetchPicklistValue.shared
+            .picklistOptionsDict["Submitted_By__c"] ?? []
+
+        let sortedOptions = options.sorted {
+            $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending
+        }
+
+        guard let firstOption = sortedOptions.first else {
+            return
+        }
+
+        let currentValue = submittedBytxtFld?.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if currentValue.isEmpty {
+            submittedBytxtFld?.text = firstOption.value
         }
     }
     
@@ -295,12 +325,12 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
         eoiLocationTxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
         eoiLocationTxtFld?.translatesAutoresizingMaskIntoConstraints = false
         
-        agentNameTxtFld?.label.text = "Agent Name"
+        agentNameTxtFld?.label.text = "Agent Name *"
         agentNameTxtFld?.setOutlineColor(.darkGray, for: .normal)
         agentNameTxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
         agentNameTxtFld?.translatesAutoresizingMaskIntoConstraints = false
         
-        agentMobileTxtFld?.label.text = "Agent Mobile"
+        agentMobileTxtFld?.label.text = "Agent Mobile *"
         agentMobileTxtFld?.setOutlineColor(.darkGray, for: .normal)
         agentMobileTxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
         agentMobileTxtFld?.translatesAutoresizingMaskIntoConstraints = false
@@ -438,6 +468,8 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
         let rmName = RMNametxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let firstPref = firstPreferenceTxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let secondPref = secondPreferenceTxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let agentName = agentNameTxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let agentMobile = agentMobileTxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         
         if projectName.isEmpty {
             showAlert(with: "Validation Error", message: "Please enter Project Name.")
@@ -463,6 +495,31 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
             showAlert(with: "Validation Error", message: "Please enter 2nd Preference.")
             return false
         }
+        if agentName.isEmpty {
+            showAlert(with: "Validation Error", message: "Please enter Agent Name.")
+            return false
+        }
+        
+        if agentMobile.isEmpty {
+            showAlert(with: "Validation Error", message: "Please enter Agent Mobile.")
+            return false
+        }
+        let mobileRegex = #"^[0-9]{10}$"#
+        
+        guard agentMobile.range(of: mobileRegex, options: .regularExpression) != nil else {
+            
+            showAlert(
+                
+                with: "Validation Error",
+                
+                message: "Agent Mobile must contain exactly 10 digits."
+                
+            )
+            
+            return false
+            
+        }
+        
         return true
     }
     
@@ -521,7 +578,7 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
 
             } else {
 
-                let type = Helper.typeDisplayName ?? ""
+                let type = Helper.typeDisplayName
 
                 if type == "Partnership" {
 
@@ -633,7 +690,7 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
 
                         } else {
 
-                            let type = Helper.typeDisplayName ?? ""
+                            let type = Helper.typeDisplayName
 
                             if type == "Partnership" {
 
@@ -1694,52 +1751,47 @@ extension miscellaneousEOIScreenVC: UITextFieldDelegate {
         tentativePriceRangeDropdown.show()
     }
     
-    func showSubmittedByDropdown() {
-        let options = FetchPicklistValue.shared.picklistOptionsDict["Submitted_By__c"] ?? []
-        let accountLabel = options.map { $0.label }
-        let accountValue = options.map { $0.value }
-        
-        print("Submitted_By__c Labels: \(accountLabel)")
-        print("Submitted_By__c: \(accountValue)")
-        
-        submittedByDropdown.anchorView = submittedBytxtFld
-        submittedByDropdown.dataSource = accountValue
-        
-        submittedByDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-            guard index < accountLabel.count else { return }
-            self?.submittedBytxtFld?.text = item
-        }
-        submittedByDropdown.show()
-    }
-    
-//    func showRMNameDropdown() {
-//        eOIWebServices.getActiveRMUsers { [weak self] error, users, status in
-//            guard let self = self else { return }
-//            
-//            if status == .success, let users = users {
-//                let names = users.compactMap { $0.name }
-//                
-//                self.RMNameDropdown.anchorView = self.RMNametxtFld
-//                self.RMNameDropdown.dataSource = names
-//                
-//                self.RMNameDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-//                    guard let self = self else { return }
-//                    let selectedUser = users[index]
-//                    self.RMNametxtFld?.text = selectedUser.name
-//                    selectedRM = selectedUser.id ?? ""
-//                    print("✅ Selected RM ID: \(selectedRM)")
-//                }
-//                
-//                self.RMNameDropdown.show()
-//            } else {
-//                print(error ?? "Failed to fetch RM users")
-//            }
+//    func showSubmittedByDropdown() {
+//        let options = FetchPicklistValue.shared.picklistOptionsDict["Submitted_By__c"] ?? []
+//        let accountLabel = options.map { $0.label }
+//        let accountValue = options.map { $0.value }
+//        
+//        print("Submitted_By__c Labels: \(accountLabel)")
+//        print("Submitted_By__c: \(accountValue)")
+//        
+//        submittedByDropdown.anchorView = submittedBytxtFld
+//        submittedByDropdown.dataSource = accountValue
+//        
+//        submittedByDropdown.selectionAction = { [weak self] (index: Int, item: String) in
+//            guard index < accountLabel.count else { return }
+//            self?.submittedBytxtFld?.text = item
 //        }
+//        submittedByDropdown.show()
 //    }
     
-    func showRMNameDropdown() {
+    func showSubmittedByDropdown() {
+        let options = FetchPicklistValue.shared
+            .picklistOptionsDict["Submitted_By__c"] ?? []
+
+        let sortedOptions = options.sorted {
+            $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending
+        }
+
+        let accountLabels = sortedOptions.map { $0.label }
+        let accountValues = sortedOptions.map { $0.value }
+
+        submittedByDropdown.anchorView = submittedBytxtFld
+        submittedByDropdown.dataSource = accountLabels
+
+        submittedByDropdown.selectionAction = { [weak self] index, _ in
+            guard index < accountValues.count else { return }
+            self?.submittedBytxtFld?.text = accountValues[index]
+        }
+
+        submittedByDropdown.show()
+    }
         
-        // If users are already loaded, just show dropdown
+    func showRMNameDropdown() {
         if !allRMUsers.isEmpty {
             filteredRMUsers = allRMUsers
             updateRMNameDropdown()

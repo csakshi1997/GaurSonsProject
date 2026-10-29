@@ -31,6 +31,7 @@ struct InventoryProjectModel {
     var builtupArea: Double?
     var unitOfMeasurement: String?
     var propertyType: String?
+    var sellableArea: Double?
     
     var tower: Tower?
     var floor: Floor?
@@ -126,6 +127,13 @@ struct InventoryProjectModel {
         
         if let floorDict = dict["Floor_Number__r"] as? [String: Any] {
             self.floor = Floor(dict: floorDict)
+        }
+        if let area = dict["Sellable_Area__c"] as? Double {
+            self.sellableArea = area
+        } else if let area = dict["Sellable_Area__c"] as? Int {
+            self.sellableArea = Double(area)
+        } else if let area = dict["Sellable_Area__c"] as? String {
+            self.sellableArea = Double(area)
         }
     }
 }

@@ -685,7 +685,7 @@ class DetailVC: UIViewController {
         projectNamebl?.text = setValue(EOiModelDict.project?.name)
         EOITentativeLbl?.text = setValue(EOiModelDict.eoiTentativePriceRange)
         EOISaleableAreaLbl?.text = setValue(EOiModelDict.eoiSaleableArea)
-        submittedByLbl?.text = setValue(EOiModelDict.submittedBy)
+        submittedByLbl?.text = setValue(EOiModelDict.createdBy?.name)
         RMNameLbl?.text = setValue(EOiModelDict.rmDetails?.name)
         
         documentNumberLbl?.text = setValue(EOiModelDict.documentNumber)

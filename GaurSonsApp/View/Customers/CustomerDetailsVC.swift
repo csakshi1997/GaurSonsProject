@@ -166,23 +166,35 @@ class CustomerDetailsVC: UIViewController, UITextViewDelegate {
 
         // MARK: - Customer Details
 
-        headerCustomerNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.name)
-        customerNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.name)
-        statusLbl?.text = Helper.displayValue(cuatomerDetailsDict?.status)
-        mobileLbl?.text = Helper.displayValue(cuatomerDetailsDict?.mobile)
-        emailLbl?.text = Helper.displayValue(cuatomerDetailsDict?.email)
-        projectLbl?.text = Helper.displayValue(cuatomerDetailsDict?.project?.name)
-        submissionTypeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.brokerType)
-        verificationTypeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.verificationType)
-        agentNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.createdBy?.name)
+        headerCustomerNameLbl?.text = displayValue(cuatomerDetailsDict?.name)
+
+        customerNameLbl?.text = displayValue(cuatomerDetailsDict?.name)
+
+        statusLbl?.text = displayValue(cuatomerDetailsDict?.status)
+
+        mobileLbl?.text = displayValue(cuatomerDetailsDict?.mobile)
+
+        emailLbl?.text = displayValue(cuatomerDetailsDict?.email)
+
+        projectLbl?.text = displayValue(cuatomerDetailsDict?.project?.name)
+
+        submissionTypeLbl?.text = displayValue(cuatomerDetailsDict?.brokerType)
+
+        verificationTypeLbl?.text = displayValue(cuatomerDetailsDict?.verificationType)
+
+        agentNameLbl?.text = displayValue(cuatomerDetailsDict?.createdBy?.name)
 
         // MARK: - Aadhaar Details
 
-        aadhaarNameLbl?.text = Helper.displayValue(cuatomerDetailsDict?.aadhaarName)
-        aadhaarEndingLbl?.text = Helper.displayValue(cuatomerDetailsDict?.aadhaarEnding)
-        genderLbl?.text = Helper.displayValue(cuatomerDetailsDict?.gender)
-        dOBLbl?.text = Helper.displayValue(cuatomerDetailsDict?.dateOfBirth)
-        careOfLbl?.text = Helper.displayValue(cuatomerDetailsDict?.careOf)
+        aadhaarNameLbl?.text = displayValue(cuatomerDetailsDict?.aadhaarName)
+
+        aadhaarEndingLbl?.text = displayValue(cuatomerDetailsDict?.aadhaarEnding)
+
+        genderLbl?.text = displayValue(cuatomerDetailsDict?.gender)
+
+        dOBLbl?.text = displayValue(cuatomerDetailsDict?.dateOfBirth)
+
+        careOfLbl?.text = displayValue(cuatomerDetailsDict?.careOf)
 
         // MARK: - Address Details
 
@@ -203,7 +215,7 @@ class CustomerDetailsVC: UIViewController, UITextViewDelegate {
         VTCLbl?.text = Helper.displayValue(cuatomerDetailsDict?.vtc)
         districtbl?.text = Helper.displayValue(cuatomerDetailsDict?.district)
         subDistrictLbl?.text = Helper.displayValue(cuatomerDetailsDict?.subdist)
-        postalCodeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.pincode)
+        postalCodeLbl?.text = displayValue(cuatomerDetailsDict?.pincode)
         postOfficeLbl?.text = Helper.displayValue(cuatomerDetailsDict?.postOffice)
         stateLbl?.text = Helper.displayValue(cuatomerDetailsDict?.state)
         countryLbl?.text = Helper.displayValue(cuatomerDetailsDict?.country)
@@ -327,6 +339,17 @@ class CustomerDetailsVC: UIViewController, UITextViewDelegate {
         )
 
         maskedEmailLbl?.text = Helper.displayValue(decryptedEmail)
+    }
+    
+    func displayValue(_ value: String?) -> String {
+        guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !value.isEmpty,
+              value.caseInsensitiveCompare("null") != .orderedSame,
+              value.caseInsensitiveCompare("<null>") != .orderedSame else {
+            return "-"
+        }
+
+        return value
     }
     
     @objc private func handleDeclarationTap(_ gesture: UITapGestureRecognizer) {

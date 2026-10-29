@@ -80,6 +80,17 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("========== PaymentDetailVC DEBUG ==========")
+
+            print("viewDidLoad called")
+
+            print("paymentMode: '\(paymentMode)'")
+
+            print("isFromApproval: \(isFromApproval)")
+
+            print("paymentDict: \(paymentDict)")
+
+            print("============================================")
         setInitialUI()
         tableViewsHeader?.layer.cornerRadius = 8
         loaderView = UIActivityIndicatorView(style: .large)
@@ -159,6 +170,7 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
     }
     
     func RTGSUI() {
+        print(paymentDict)
         receiptRTGSLbl?.text = paymentDict.name
         let eoiAmountText = paymentDict.eoiAmount ?? 0.0
         EOIAmountRTGSLbl?.text = String(format: "%.2f", eoiAmountText)
@@ -167,12 +179,13 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
         drawnBankChequeLbl?.text = paymentDict.drawnBank
         bankAccountNumberChequeLbl?.text = paymentDict.paymentReferenceNumber
         paymentDateRTGSLbl?.text = paymentDict.paymentDate
-        paymentStatusRTGSLbl?.text = "-"
-        approvalStatusRTGSLbl?.text = "-"
+        paymentStatusRTGSLbl?.text = paymentDict.chequeStatus
+        approvalStatusRTGSLbl?.text = paymentDict.approvalStatus
         notesRTGSLbl?.text = paymentDict.notes
     }
     
     func ChequeUI() {
+        print(paymentDict)
         receiptChequeLbl?.text = paymentDict.name
         let eoiAmountText = paymentDict.eoiAmount ?? 0.0
         EOIAmountChequeLbl?.text = String(format: "%.2f", eoiAmountText)
@@ -181,12 +194,13 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
         DDDateChequeLbl?.text = paymentDict.chequeUTRDate
         drawnBankChequeLbl?.text = paymentDict.drawnBank
         bankAccountNumberChequeLbl?.text = paymentDict.bankAccountNumber
-        paymentStatusChequeLbl?.text = "-"
-        approvalStatusChequeLbl?.text = "-"
+        paymentStatusChequeLbl?.text = paymentDict.chequeStatus
+        approvalStatusChequeLbl?.text = paymentDict.approvalStatus
         notesChequeLbl?.text = paymentDict.notes
     }
     
     func EasebuzzUI() {
+        print(paymentDict)
         let eoiAmountText = paymentDict.eoiAmount ?? 0.0
 
         EOIAmountEasebuzzLbl?.text = String(format: "%.2f", eoiAmountText)
@@ -202,7 +216,7 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
 
         paymentClearingDateUPILbl?.text = Helper.displayValue(paymentDict.paymentDateTime)
 
-        paymentStatusEasebuzzLbl?.text = Helper.displayValue(paymentDict.approvalStatus)
+        paymentStatusEasebuzzLbl?.text = Helper.displayValue(paymentDict.chequeStatus)
 
         approvalStatusEasebuzzLbl?.text = Helper.displayValue(paymentDict.approvalStatus)
 
@@ -210,6 +224,7 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
     }
     
     func UPIUI() {
+        print(paymentDict)
         receiptUPILbl?.text = paymentDict.name
         let eoiAmountText = paymentDict.eoiAmount ?? 0.0
         EOIAmountUPILbl?.text = String(format: "%.2f", eoiAmountText)
@@ -218,8 +233,8 @@ class PaymentDetailVC: UIViewController, QLPreviewControllerDataSource {
         UPIIdLbl?.text = paymentDict.upiId
         referenceNumberUPILbl?.text = paymentDict.paymentReferenceNumber
         paymentDateUPILbl?.text = paymentDict.paymentDate
-        paymentStatusUPILbl?.text = "-"
-        approvalStatusUPILbl?.text = "-"
+        paymentStatusUPILbl?.text = paymentDict.chequeStatus
+        approvalStatusUPILbl?.text = paymentDict.approvalStatus
         notesUPILbl?.text = paymentDict.notes
     }
     

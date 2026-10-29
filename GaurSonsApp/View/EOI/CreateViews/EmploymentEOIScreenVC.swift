@@ -169,24 +169,24 @@ class EmploymentEOIScreenVC: UIViewController, UITextViewDelegate {
     
     func validateFields() -> Bool {
         
-        let profession = professionalJobTitletxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let employmentType = employmentTitletxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let companyAddress = companyNameAddresstxtVw?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        
-        if profession.isEmpty {
-            showAlert(with: "Validation Error", message: "Please enter profession/job title.")
-            return false
-        }
-        
-        if employmentType.isEmpty {
-            showAlert(with: "Validation Error", message: "Please select employment type.")
-            return false
-        }
-        
-        if companyAddress.isEmpty || companyAddress == "Enter Company Name & Address" {
-            showAlert(with: "Validation Error", message: "Please enter company name & address.")
-            return false
-        }
+//        let profession = professionalJobTitletxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+//        let employmentType = employmentTitletxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+//        let companyAddress = companyNameAddresstxtVw?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+//        
+//        if profession.isEmpty {
+//            showAlert(with: "Validation Error", message: "Please enter profession/job title.")
+//            return false
+//        }
+//        
+//        if employmentType.isEmpty {
+//            showAlert(with: "Validation Error", message: "Please select employment type.")
+//            return false
+//        }
+//        
+//        if companyAddress.isEmpty || companyAddress == "Enter Company Name & Address" {
+//            showAlert(with: "Validation Error", message: "Please enter company name & address.")
+//            return false
+//        }
         
         return true
     }

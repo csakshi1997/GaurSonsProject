@@ -355,26 +355,6 @@ class PersonalEOIScreenVC: UIViewController {
     func setUpInitialUI() {
         UIUpdateAccordingToPaymentMode(residentType: "Indian")
         residentTypetxtFld?.text = "Indian"
-//        chooseAadharVerificationMethodLblStack?.isHidden = false
-//        verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = false
-//        sendBtnsStack?.isHidden = false
-//        panNotxtFld?.isHidden = false
-//        panUploadtxtFld?.isHidden = false
-//        panUploadImgView?.isHidden = false
-//        isResidentIndian = true
-//        if isOffline {
-//            chooseAadharVerificationMethodLblStack?.isHidden = true
-//            verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = true
-//            sendBtnsStack?.isHidden = true
-//        } else {
-//            chooseAadharVerificationMethodLblStack?.isHidden = false
-//            verifyViaDigiLockerOrUploadAadharBtnsStack?.isHidden = false
-//            sendBtnsStack?.isHidden = false
-//            panNotxtFld?.isHidden = false
-//            panUploadtxtFld?.isHidden = false
-//            panUploadImgView?.isHidden = false
-//            isResidentIndian = true
-//        }
         if Defaults.isFromEOI ?? false {
             headingLbl?.text = "Applicant EOI Form"
         } else {
@@ -1672,26 +1652,6 @@ class PersonalEOIScreenVC: UIViewController {
 
         guard saveApplicantData() else { return }
 
-//        let storyboard = UIStoryboard(name: "EOI", bundle: Bundle.main)
-//
-//        if let addressVC = storyboard.instantiateViewController(
-//            withIdentifier: "AddressEOIScreenVC"
-//        ) as? AddressEOIScreenVC {
-//
-//            addressVC.applicantIndex = applicantIndex
-//            addressVC.isFromCustomers = isFromCustomers
-//            addressVC.isLocalEdit = isLocalEdit
-//            addressVC.cuatomerDetailsDict = cuatomerDetailsDict
-//            addressVC.addharDetailDict =  self.addharDetailsDict
-//            addressVC.isAddharVerify = self.isAddharVerify
-//
-//            if isForEditing {
-//                addressVC.isForEditing = isForEditing
-//                addressVC.applicantDetailsModel = applicantDetailsModel
-//            }
-//
-//            navigationController?.pushViewController(addressVC, animated: true)
-//        }
         let storyboard = UIStoryboard(name: "EOI", bundle: Bundle.main)
 
         if let addressVC = storyboard.instantiateViewController(

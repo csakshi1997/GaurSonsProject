@@ -108,7 +108,7 @@ class BankDetailsEOISCreenVC: UIViewController, UITextFieldDelegate {
         UPIIdtxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
         UPIIdtxtFld?.translatesAutoresizingMaskIntoConstraints = false
         
-        uploadCancelledChecktxtFld?.label.text = "Upload Cancelled Cheque "
+        uploadCancelledChecktxtFld?.label.text = "Upload Cancelled Cheque *"
         uploadCancelledChecktxtFld?.setOutlineColor(.darkGray, for: .normal)
         uploadCancelledChecktxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
         uploadCancelledChecktxtFld?.translatesAutoresizingMaskIntoConstraints = false
@@ -170,6 +170,25 @@ class BankDetailsEOISCreenVC: UIViewController, UITextFieldDelegate {
         
         if branchCodetxtFld?.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
             errorMessage += "Please enter Branch Code.\n"
+        }
+        
+        var isCancelledChequeUploaded = false
+
+        if let index = applicantIndex,
+           let applicant = OpportunityManager.shared.getApplicant(at: index) {
+
+            let chequeFileName = applicant.cancelledChequeFileName?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+            isCancelledChequeUploaded =
+                !chequeFileName.isEmpty &&
+                !applicant.uploadedFiles.isEmpty
+        }
+
+        if !isCancelledChequeUploaded {
+            
+            errorMessage += "Please upload a Cancelled Cheque.\n"
+            
         }
         
         if !errorMessage.isEmpty {

@@ -379,66 +379,7 @@ class QR: UIViewController {
         projectNametxtFld?.isHidden = false
         searchImg?.isHidden = false
     }
-    
-//    @IBAction func nextButtonTapped(sender: UIButton) {
-//        let nextBtn = sender.tag
-//        if nextBtn == 11 {
-//            if projectNametxtFld?.text?.isEmpty ?? false {
-//                showAlert(with: "Validation Error", message: "Please Choose the Project First Then you can generate the QR")
-//                return
-//            }
-//            guard let projectId = selectedProjectId,
-//                  let accountId = selectedAccountEncryptedId else {
-//                showAlert(with: "Error", message: "Missing Project or Account Info")
-//                return
-//            }
-//
-//            let baseUrl = "https://gaursons--uat.sandbox.my.site.com/s/newcustomer"
-//
-//            let url = "\(baseUrl)?ref=\(projectId)&cp=\(accountId)"
-//            self.soldQRUrl = url
-//        
-//            if let qrImage = generateQRCode(from: url) {
-//                qrImageView?.image = qrImage
-//                downloadQRStack?.isHidden = false
-////                backBtn?.isHidden = false
-//                qrImgHeight?.constant = 210
-//                downlaodQRStackHeight?.constant = 36
-//                nextBtnHeight?.constant = 0
-//                projectNametxtFldHeight?.constant = 0
-//                projectNametxtFld?.isHidden = true
-//                searchImg?.isHidden = true
-//            }
-//        } else if nextBtn == 12 {
-//            if (projectNameForUnsoldtxtFld?.text?.isEmpty ?? false) {
-//                showAlert(with: "Validation Error", message: "Please Choose the Project First Then you can generate the QR")
-//                return
-//            } else {
-//                guard let projectId = selectedProjectIdForUnsold,
-//                      let accountId = selectedAccountEncryptedId else {
-//                    showAlert(with: "Error", message: "Missing Project or Account Info")
-//                    return
-//                }
-//
-//                let baseUrl = "https://gaursons--uat.sandbox.my.site.com/s/newcustomer"
-//                let url = "\(baseUrl)?ref=\(projectId)&cp=\(accountId)"
-//                self.unsoldQRUrl = url
-//                if let qrImage = generateQRCode(from: url) {
-//                    qrImageForUnsoldView?.image = qrImage
-//                    downloadQRForUnsoldStack?.isHidden = false
-//                    backForUnsoldBtn?.isHidden = false
-//                    qrImgForUnsoldHeight?.constant = 210
-//                    downlaodQRStackForUnsoldHeight?.constant = 36
-//                    nextBtnForUnsoldHeight?.constant = 0
-//                    projectNameForUnsoldtxtFldHeight?.constant = 0
-//                    projectNameForUnsoldtxtFld?.isHidden = true
-//                    searchImg2?.isHidden = true
-//                }
-//            }
-//            
-//        }
-//    }
-    
+        
     @IBAction func nextButtonTapped(sender: UIButton) {
         let nextBtn = sender.tag
         if nextBtn == 11 {
