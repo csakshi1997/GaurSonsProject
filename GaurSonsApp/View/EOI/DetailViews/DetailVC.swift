@@ -359,7 +359,7 @@ class DetailVC: UIViewController {
                 DispatchQueue.main.async {
                     self.filteredApprovalRecord = GlobalData.allApprovalModel
                     self.approvalArr = GlobalData.allApprovalModel
-
+                    print(self.approvalArr)
                     self.totalApprovalLbl?.text =
                         "Approval History (\(self.approvalArr.count))"
 
@@ -1822,15 +1822,26 @@ extension DetailVC: UITableViewDelegate, UITableViewDataSource {
             }
             return cell
         } else if tableView == approvalTableView {
-            let cell: ApprovalCell = tableView.dequeueReusableCell(withIdentifier: "ApprovalCell", for: indexPath) as! ApprovalCell
+            let cell: ApprovalCell = tableView.dequeueReusableCell(
+                withIdentifier: "ApprovalCell",
+                for: indexPath
+            ) as! ApprovalCell
+
             let approvalDict = filteredApprovalRecord[indexPath.row]
+
             cell.stepName?.text = approvalDict.actorName
-            cell.dateLbl?.text = CustomDateFormatter().getApprovalDateTime(dateString: approvalDict.createdDate ?? "")
-            cell.statusLbl?.text = approvalDict.stepStatus
+            cell.dateLbl?.text = CustomDateFormatter().getApprovalDateTime(
+                dateString: approvalDict.createdDate ?? ""
+            )
+
+            let status = approvalDict.stepStatus?.lowercased() ?? ""
+            cell.statusLbl?.text = status == "started" ? "Pending" : approvalDict.stepStatus
+
             cell.totalPaymentDetailsLbl?.text = "-"
             cell.assignedTo?.text = approvalDict.actorName
+
             return cell
-        } else if tableView == propertyTableView {
+        }  else if tableView == propertyTableView {
             let cell: PropertyCell = tableView.dequeueReusableCell(withIdentifier: "PropertyCell", for: indexPath) as! PropertyCell
             let propertyDict = propertyArr[indexPath.row]
             cell.unitName?.text = propertyDict.name

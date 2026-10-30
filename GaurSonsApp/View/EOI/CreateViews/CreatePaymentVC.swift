@@ -368,7 +368,8 @@ class CreatePaymentVC: UIViewController {
             attachDocumentImgView?.isHidden = false
 
         case "Cheque":
-
+            DDNumberTxtFld?.label.text = "Cheque Number *"
+            DDDateTxtFld?.label.text = "Cheque Date *"
             EOITxtFld?.isHidden = false
             DDNumberTxtFld?.isHidden = false
             DDDateTxtFld?.isHidden = false
@@ -383,7 +384,8 @@ class CreatePaymentVC: UIViewController {
             isPositiveCheckBox = true
 
         case "Demand Draft(DD)":
-
+            DDNumberTxtFld?.label.text = "Demand Draft(DD) Number *"
+            DDDateTxtFld?.label.text = "Demand Draft(DD) Date *"
             EOITxtFld?.isHidden = false
             DDNumberTxtFld?.isHidden = false
             DDDateTxtFld?.isHidden = false

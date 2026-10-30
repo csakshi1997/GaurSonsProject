@@ -63,6 +63,8 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
     var cuatomerDetailsDict: CustomerModel?
     var loaderContainer: UIView?
     var loaderView: UIActivityIndicatorView?
+    var projectAreaConfigurations: [[String: Any]] = []
+    var sellableAreaOptions: [String] = []
     var loaderLabel: UILabel?
     var isFromCustomers: Bool = false
     let endPoint = EndPoints()
@@ -259,11 +261,18 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
 //        projectNametxtFld?.inputView = UIView()
         projectNametxtFld?.isEnabled = false
         
+//        tentativeSellabletxtFld?.label.text = "Tentative Sellable Area *"
+//        tentativeSellabletxtFld?.setOutlineColor(.darkGray, for: .normal)
+//        tentativeSellabletxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
+//        tentativeSellabletxtFld?.translatesAutoresizingMaskIntoConstraints = false
+        
         tentativeSellabletxtFld?.label.text = "Tentative Sellable Area *"
         tentativeSellabletxtFld?.setOutlineColor(.darkGray, for: .normal)
         tentativeSellabletxtFld?.setOutlineColor(UIColor(hex: "223B30") ?? UIColor(), for: .editing)
         tentativeSellabletxtFld?.translatesAutoresizingMaskIntoConstraints = false
-//        tentativeSellabletxtFld?.isEnabled = false
+        tentativeSellabletxtFld?.delegate = self
+        tentativeSellabletxtFld?.inputView = UIView()
+        tentativeSellabletxtFld?.isUserInteractionEnabled = true
         
         tentativePricetxtFld?.label.text = "Tentative Price Range"
         tentativePricetxtFld?.setOutlineColor(.darkGray, for: .normal)
@@ -343,6 +352,512 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
         uploadTxtFld?.addGestureRecognizer(passportTap)
         uploadTxtFld?.isUserInteractionEnabled = true
     }
+    
+    
+    
+    @IBAction func resetAction() {
+        clearAllFields()
+    }
+    
+    @IBAction func backAction() {
+        self.navigationController?.popViewController(animated: true)
+    }
+    
+    @IBAction func agreementAction(_ sender: UIButton?) {
+        isAgreementBtnClick = !isAgreementBtnClick
+    }
+    
+    @IBAction func uploadOffLineFormAction(_ sender: UIButton?) {
+        isOfflineEOIForm = false
+        uploadTxtFldHeight?.constant = 0
+        uploadTxtFld?.isHidden = true
+        uploadImgIcon?.isHidden = true
+        if sender?.tag == 11 {
+            isOfflineEOIForm = true
+            isOfflineEOIFormYes?.backgroundColor = UIColor(hex: "223B30")
+            isOfflineEOIFormYes?.setTitleColor(.white, for: .normal)
+            isOfflineEOIFormNO?.backgroundColor = UIColor(hex: "DFE1E0")
+            isOfflineEOIFormNO?.setTitleColor(.black, for: .normal)
+            uploadTxtFldHeight?.constant = 48
+            uploadTxtFld?.isHidden = false
+            uploadImgIcon?.isHidden = false
+        } else if sender?.tag == 12 {
+            isOfflineEOIForm = false
+            isOfflineEOIFormYes?.backgroundColor = UIColor(hex: "DFE1E0")
+            isOfflineEOIFormYes?.setTitleColor(.black, for: .normal)
+            isOfflineEOIFormNO?.backgroundColor = UIColor(hex: "223B30")
+            isOfflineEOIFormNO?.setTitleColor(.white, for: .normal)
+        }
+    }
+    
+    @IBAction func submitAction() {
+        submitEOIForm()
+    }
+}
+
+extension miscellaneousEOIScreenVC: UITextFieldDelegate {
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        if textField == tentativeSellabletxtFld {
+
+               showTentativeSellableAreaDropdown()
+
+               return false
+
+           }
+//        if textField == projectNametxtFld {
+//            showProjectNameDropdown()
+//            return false
+//        } else
+        if textField == submittedBytxtFld {
+            showSubmittedByDropdown()
+            return false
+        } else if textField == RMNametxtFld {
+//            showRMNameDropdown()
+//            return false
+            return true
+        } else if textField == firstPreferenceTxtFld {
+            showPreferenceDropdown(for: firstPreferenceTxtFld!,
+                                   selectedPreferences: [secondPreference, thirdPreference].compactMap { $0 },
+                                   allPreferences: preferencesList) { selected in
+                self.firstPreference = selected
+            }
+            return false
+        } else if textField == secondPreferenceTxtFld {
+            showPreferenceDropdown(for: secondPreferenceTxtFld!,
+                                   selectedPreferences: [firstPreference, thirdPreference].compactMap { $0 },
+                                   allPreferences: preferencesList) { selected in
+                self.secondPreference = selected
+            }
+            return false
+        } else if textField == thirdPreferenceTxtFld {
+            showPreferenceDropdown(for: thirdPreferenceTxtFld!,
+                                   selectedPreferences: [firstPreference, secondPreference].compactMap { $0 },
+                                   allPreferences: preferencesList) { selected in
+                self.thirdPreference = selected
+            }
+            return false
+        }
+        return true
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        
+        if textField == RMNametxtFld {
+            
+            // If data is already loaded, don't call API again
+            if allRMUsers.isEmpty {
+                loadRMUsers()
+            } else {
+                filteredRMUsers = allRMUsers
+            }
+        }
+    }
+    
+    func loadRMUsers() {
+        
+        showLoader(with: "Loading RM users...")
+        
+        eOIWebServices.getActiveRMUsers { [weak self] error, users, status in
+            
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                
+                self.hideLoader()
+                
+                if status == .success, let users = users {
+                    
+                    self.allRMUsers = users
+                    self.filteredRMUsers = users
+                    
+                    // Don't show dropdown immediately.
+                    // User can type first.
+                    
+                } else {
+                    print(error ?? "Failed to fetch RM users")
+                }
+            }
+        }
+    }
+        
+//    func showTentativeSellableAreaDropdown() {
+//
+//        guard !sellableAreaOptions.isEmpty else {
+//            print("No Sellable Area options available")
+//            return
+//        }
+//
+//        tentativeSellableAreaDropdown.anchorView = tentativeSellabletxtFld
+//        tentativeSellableAreaDropdown.dataSource = sellableAreaOptions
+//        tentativeSellableAreaDropdown.direction = .bottom
+//
+//        tentativeSellableAreaDropdown.selectionAction = { [weak self] index, item in
+//
+//            guard let self = self else { return }
+//
+//            self.tentativeSellabletxtFld?.text = item
+//
+//            self.tentativeSellableAreaDropdown.hide()
+//            self.tentativeSellabletxtFld?.resignFirstResponder()
+//
+//            print("Selected Sellable Area: \(item)")
+//        }
+//
+//        tentativeSellableAreaDropdown.show()
+//    }
+    
+    func showTentativeSellableAreaDropdown() {
+
+        guard !sellableAreaOptions.isEmpty else {
+            print("No Sellable Area options available")
+            return
+        }
+
+        tentativeSellableAreaDropdown.anchorView = tentativeSellabletxtFld
+        tentativeSellableAreaDropdown.dataSource = sellableAreaOptions
+        tentativeSellableAreaDropdown.direction = .bottom
+
+        tentativeSellableAreaDropdown.selectionAction = { [weak self] index, item in
+
+            guard let self = self else { return }
+
+            self.tentativeSellabletxtFld?.text = item
+
+            // Find the configuration matching the selected Sellable Area.
+            if let selectedConfiguration = self.projectAreaConfigurations.first(where: {
+                ($0["Sellable_Area__c"] as? String) == item
+            }) {
+
+                let priceRange = selectedConfiguration["Price_Range__c"] as? String ?? ""
+
+                self.tentativePricetxtFld?.text = priceRange
+
+                print("Selected Sellable Area: \(item)")
+                print("Updated Tentative Price Range: \(priceRange)")
+
+            } else {
+                self.tentativePricetxtFld?.text = ""
+            }
+
+            self.tentativeSellableAreaDropdown.hide()
+            self.tentativeSellabletxtFld?.resignFirstResponder()
+        }
+
+        tentativeSellableAreaDropdown.show()
+    }
+    
+    func showProjectNameDropdown() {
+        let projectNames = projectList.map { $0.name ?? "" }
+        
+        projectNameDropdown.anchorView = projectNametxtFld
+        projectNameDropdown.dataSource = projectNames
+        
+        projectNameDropdown.selectionAction = { [weak self] (index: Int, item: String) in
+            guard let self = self else { return }
+            self.projectNametxtFld?.text = item
+            let selectedProject = self.projectList[index]
+            selectedProjectName = selectedProject.id ?? EMPTY
+            print("Selected Project ID: \(selectedProject.id ?? "")")
+            if let projectId = selectedProject.id {
+                self.fetchProjectConfiguration(for: projectId)
+                self.fetchPreferences(for: projectId)
+            }
+        }
+        projectNameDropdown.show()
+    }
+    
+    func showTentativePriceRangeDropdown() {
+        let options = FetchPicklistValue.shared.picklistOptionsDict["EOI_Tentative_Price_Range__c"] ?? []
+        let accountLabel = options.map { $0.label }
+        let accountValue = options.map { $0.value }
+        
+        print("EOI_Tentative_Price_Range__c Labels: \(accountLabel)")
+        print("EOI_Tentative_Price_Range__c: \(accountValue)")
+        
+        tentativePriceRangeDropdown.anchorView = projectNametxtFld
+        tentativePriceRangeDropdown.dataSource = accountValue
+        
+        tentativePriceRangeDropdown.selectionAction = { [weak self] (index: Int, item: String) in
+            guard index < accountLabel.count else { return }
+            self?.projectNametxtFld?.text = item
+        }
+        tentativePriceRangeDropdown.show()
+    }
+    
+//    func showSubmittedByDropdown() {
+//        let options = FetchPicklistValue.shared.picklistOptionsDict["Submitted_By__c"] ?? []
+//        let accountLabel = options.map { $0.label }
+//        let accountValue = options.map { $0.value }
+//        
+//        print("Submitted_By__c Labels: \(accountLabel)")
+//        print("Submitted_By__c: \(accountValue)")
+//        
+//        submittedByDropdown.anchorView = submittedBytxtFld
+//        submittedByDropdown.dataSource = accountValue
+//        
+//        submittedByDropdown.selectionAction = { [weak self] (index: Int, item: String) in
+//            guard index < accountLabel.count else { return }
+//            self?.submittedBytxtFld?.text = item
+//        }
+//        submittedByDropdown.show()
+//    }
+    
+    func showSubmittedByDropdown() {
+        let options = FetchPicklistValue.shared
+            .picklistOptionsDict["Submitted_By__c"] ?? []
+
+        let sortedOptions = options.sorted {
+            $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending
+        }
+
+        let accountLabels = sortedOptions.map { $0.label }
+        let accountValues = sortedOptions.map { $0.value }
+
+        submittedByDropdown.anchorView = submittedBytxtFld
+        submittedByDropdown.dataSource = accountLabels
+
+        submittedByDropdown.selectionAction = { [weak self] index, _ in
+            guard index < accountValues.count else { return }
+            self?.submittedBytxtFld?.text = accountValues[index]
+        }
+
+        submittedByDropdown.show()
+    }
+        
+    func showRMNameDropdown() {
+        if !allRMUsers.isEmpty {
+            filteredRMUsers = allRMUsers
+            updateRMNameDropdown()
+            return
+        }
+        
+        showLoader(with: "Loading RM users...")
+        
+        eOIWebServices.getActiveRMUsers { [weak self] error, users, status in
+            
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                
+                self.hideLoader()
+                
+                if status == .success, let users = users {
+                    
+                    self.allRMUsers = users
+                    self.filteredRMUsers = users
+                    
+                    self.updateRMNameDropdown()
+                    
+                } else {
+                    print(error ?? "Failed to fetch RM users")
+                }
+            }
+        }
+    }
+    
+    func updateRMNameDropdown() {
+        
+        let names = filteredRMUsers.compactMap { $0.name }
+        
+        if names.isEmpty {
+            RMNameDropdown.hide()
+            return
+        }
+        
+        RMNameDropdown.anchorView = RMNametxtFld
+        RMNameDropdown.dataSource = names
+        
+        // Show dropdown ABOVE the text field
+        RMNameDropdown.direction = .top
+        
+        // Optional: make dropdown same width as text field
+        RMNameDropdown.width = RMNametxtFld?.bounds.width
+        
+        RMNameDropdown.selectionAction = { [weak self] index, item in
+            
+            guard let self = self else { return }
+            
+            guard index < self.filteredRMUsers.count else {
+                return
+            }
+            
+            let selectedUser = self.filteredRMUsers[index]
+            
+            self.RMNametxtFld?.text = selectedUser.name
+            
+            self.selectedRM = selectedUser.id ?? EMPTY
+            
+            print("✅ Selected RM Name: \(selectedUser.name ?? "")")
+            print("✅ Selected RM ID: \(self.selectedRM)")
+            
+            self.RMNameDropdown.hide()
+            self.RMNametxtFld?.resignFirstResponder()
+        }
+        
+        RMNameDropdown.show()
+    }
+    
+    @objc func rmNameTextChanged(_ textField: UITextField) {
+        
+        let searchText = textField.text?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() ?? ""
+        
+        if searchText.isEmpty {
+            filteredRMUsers = allRMUsers
+        } else {
+            filteredRMUsers = allRMUsers.filter { user in
+                let name = user.name?.lowercased() ?? ""
+                return name.contains(searchText)
+            }
+        }
+        
+        updateRMNameDropdown()
+    }
+    
+    
+    func showPreferenceDropdown(for textField: MDCOutlinedTextField, selectedPreferences: [ProjectPreferenceModel], allPreferences: [ProjectPreferenceModel], selectionAction: @escaping (ProjectPreferenceModel) -> ()) {
+        
+        let dropdown = DropDown()
+        dropdown.anchorView = textField
+        
+        let filteredPreferences = allPreferences.filter { pref in
+            !selectedPreferences.contains(where: { $0.id == pref.id })
+        }
+        
+        let names = filteredPreferences.map { $0.name ?? "" }
+        dropdown.dataSource = names
+        
+        dropdown.selectionAction = { index, item in
+            let selectedPref = filteredPreferences[index]
+            textField.text = selectedPref.name
+            selectionAction(selectedPref)
+        }
+        
+        dropdown.show()
+    }
+    
+//    func fetchProjectConfiguration(for projectId: String) {
+//        eOIWebServices.getProjectConfiguration(projectId: projectId) { [weak self] error, response, status in
+//            guard let self = self else { return }
+//            
+//            if status == .success,
+//               let records = response?["records"] as? [[String: Any]],
+//               let record = records.first {
+//                
+//                let sellableArea = record["Sellable_Area__c"] as? String ?? ""
+//                let priceRange = record["Price_Range__c"] as? String ?? ""
+//                
+//                DispatchQueue.main.async {
+////                    self.tentativeSellabletxtFld?.text = sellableArea
+//                    self.tentativePricetxtFld?.text = priceRange
+//                }
+//            } else {
+//                print(error ?? "Failed to load project configuration")
+//            }
+//        }
+//    }
+    
+//    func fetchProjectConfiguration(for projectId: String) {
+//
+//        eOIWebServices.getProjectConfiguration(projectId: projectId) { [weak self] error, response, status in
+//
+//            guard let self = self else { return }
+//
+//            if status == .success,
+//               let records = response?["records"] as? [[String: Any]] {
+//
+//                let sellableAreas = records.compactMap {
+//                    $0["Sellable_Area__c"] as? String
+//                }
+//
+//                let priceRange = records.first?["Price_Range__c"] as? String ?? ""
+//
+//                DispatchQueue.main.async {
+//
+//                    self.sellableAreaOptions = sellableAreas
+//
+//                    // Do not automatically select a Sellable Area.
+//                    self.tentativeSellabletxtFld?.text = nil
+//
+//                    // Keep Price Range populated.
+//                    self.tentativePricetxtFld?.text = priceRange
+//
+//                    print("Sellable Area Options: \(self.sellableAreaOptions)")
+//                }
+//
+//            } else {
+//                print(error ?? "Failed to load project configuration")
+//            }
+//        }
+//    }
+    
+    
+    func fetchProjectConfiguration(for projectId: String) {
+
+        eOIWebServices.getProjectConfiguration(projectId: projectId) { [weak self] error, response, status in
+
+            guard let self = self else { return }
+
+            if status == .success,
+               let records = response?["records"] as? [[String: Any]] {
+
+                DispatchQueue.main.async {
+
+                    self.projectAreaConfigurations = records
+
+                    self.sellableAreaOptions = records.compactMap {
+                        $0["Sellable_Area__c"] as? String
+                    }
+
+                    // Do not automatically select an area or price range.
+                    self.tentativeSellabletxtFld?.text = nil
+                    self.tentativePricetxtFld?.text = nil
+
+                    print("Sellable Area Options: \(self.sellableAreaOptions)")
+                }
+
+            } else {
+                print(error ?? "Failed to load project configuration")
+            }
+        }
+    }
+    
+    func fetchPreferences(for projectId: String) {
+        eOIWebServices.getPreferences(projectId: projectId) { [weak self] error, preferences, status in
+            guard let self = self else { return }
+            
+            if status == .success, let preferences = preferences {
+                self.preferencesList = preferences
+                print("✅ Preferences fetched: \(preferences.map { $0.name ?? "" })")
+            } else {
+                print(error ?? "Failed to load preferences")
+            }
+        }
+    }
+    
+    func handleError(step: String, error: String) {
+
+        DispatchQueue.main.async {
+
+            self.hideLoader()
+
+            Alert.showError(
+                step: step,
+                error: error,
+                on: self
+            )
+        }
+    }
+}
+
+struct Attachment {
+    var fileName: String
+    var fileURL: URL
+    var fileType: String
+}
+
+extension miscellaneousEOIScreenVC {
     
     @objc func uploadOptions() {
         showUploadOptions(sourceField: "Upload")
@@ -1178,7 +1693,7 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
         }
         print("maskedDataStringmaskedDataStringmaskedDataString\(maskedDataString)")
 
-        showLoader(with: "Saving Applicant Details...")        
+        showLoader(with: "Saving Applicant Details...")
         let formPayload: [String: Any] = [
             "Opportunity__c": oppId,
             "RecordTypeId": recordTypeId,
@@ -1577,384 +2092,4 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
         }
     }
     
-    @IBAction func resetAction() {
-        clearAllFields()
-    }
-    
-    @IBAction func backAction() {
-        self.navigationController?.popViewController(animated: true)
-    }
-    
-    @IBAction func agreementAction(_ sender: UIButton?) {
-        isAgreementBtnClick = !isAgreementBtnClick
-    }
-    
-    @IBAction func uploadOffLineFormAction(_ sender: UIButton?) {
-        isOfflineEOIForm = false
-        uploadTxtFldHeight?.constant = 0
-        uploadTxtFld?.isHidden = true
-        uploadImgIcon?.isHidden = true
-        if sender?.tag == 11 {
-            isOfflineEOIForm = true
-            isOfflineEOIFormYes?.backgroundColor = UIColor(hex: "223B30")
-            isOfflineEOIFormYes?.setTitleColor(.white, for: .normal)
-            isOfflineEOIFormNO?.backgroundColor = UIColor(hex: "DFE1E0")
-            isOfflineEOIFormNO?.setTitleColor(.black, for: .normal)
-            uploadTxtFldHeight?.constant = 48
-            uploadTxtFld?.isHidden = false
-            uploadImgIcon?.isHidden = false
-        } else if sender?.tag == 12 {
-            isOfflineEOIForm = false
-            isOfflineEOIFormYes?.backgroundColor = UIColor(hex: "DFE1E0")
-            isOfflineEOIFormYes?.setTitleColor(.black, for: .normal)
-            isOfflineEOIFormNO?.backgroundColor = UIColor(hex: "223B30")
-            isOfflineEOIFormNO?.setTitleColor(.white, for: .normal)
-        }
-    }
-    
-    @IBAction func submitAction() {
-        submitEOIForm()
-    }
-}
-
-extension miscellaneousEOIScreenVC: UITextFieldDelegate {
-    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
-//        if textField == projectNametxtFld {
-//            showProjectNameDropdown()
-//            return false
-//        } else
-        if textField == submittedBytxtFld {
-            showSubmittedByDropdown()
-            return false
-        } else if textField == RMNametxtFld {
-//            showRMNameDropdown()
-//            return false
-            return true
-        } else if textField == firstPreferenceTxtFld {
-            showPreferenceDropdown(for: firstPreferenceTxtFld!,
-                                   selectedPreferences: [secondPreference, thirdPreference].compactMap { $0 },
-                                   allPreferences: preferencesList) { selected in
-                self.firstPreference = selected
-            }
-            return false
-        } else if textField == secondPreferenceTxtFld {
-            showPreferenceDropdown(for: secondPreferenceTxtFld!,
-                                   selectedPreferences: [firstPreference, thirdPreference].compactMap { $0 },
-                                   allPreferences: preferencesList) { selected in
-                self.secondPreference = selected
-            }
-            return false
-        } else if textField == thirdPreferenceTxtFld {
-            showPreferenceDropdown(for: thirdPreferenceTxtFld!,
-                                   selectedPreferences: [firstPreference, secondPreference].compactMap { $0 },
-                                   allPreferences: preferencesList) { selected in
-                self.thirdPreference = selected
-            }
-            return false
-        }
-        return true
-    }
-    
-    func textFieldDidBeginEditing(_ textField: UITextField) {
-        
-        if textField == RMNametxtFld {
-            
-            // If data is already loaded, don't call API again
-            if allRMUsers.isEmpty {
-                loadRMUsers()
-            } else {
-                filteredRMUsers = allRMUsers
-            }
-        }
-    }
-    
-    func loadRMUsers() {
-        
-        showLoader(with: "Loading RM users...")
-        
-        eOIWebServices.getActiveRMUsers { [weak self] error, users, status in
-            
-            guard let self = self else { return }
-            
-            DispatchQueue.main.async {
-                
-                self.hideLoader()
-                
-                if status == .success, let users = users {
-                    
-                    self.allRMUsers = users
-                    self.filteredRMUsers = users
-                    
-                    // Don't show dropdown immediately.
-                    // User can type first.
-                    
-                } else {
-                    print(error ?? "Failed to fetch RM users")
-                }
-            }
-        }
-    }
-    
-    func showTentativeSellableAreaDropdown() {
-        let options = FetchPicklistValue.shared.picklistOptionsDict["EOI_Saleable_Area__c"] ?? []
-        let accountLabel = options.map { $0.label }
-        let accountValue = options.map { $0.value }
-        
-        print("EOI_Saleable_Area__c Labels: \(accountLabel)")
-        print("EOI_Saleable_Area__c: \(accountValue)")
-        
-        tentativeSellableAreaDropdown.anchorView = tentativeSellabletxtFld
-        tentativeSellableAreaDropdown.dataSource = accountValue
-        
-        tentativeSellableAreaDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-            guard index < accountLabel.count else { return }
-            self?.tentativeSellabletxtFld?.text = item
-        }
-        tentativeSellableAreaDropdown.show()
-    }
-    
-    func showProjectNameDropdown() {
-        let projectNames = projectList.map { $0.name ?? "" }
-        
-        projectNameDropdown.anchorView = projectNametxtFld
-        projectNameDropdown.dataSource = projectNames
-        
-        projectNameDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-            guard let self = self else { return }
-            self.projectNametxtFld?.text = item
-            let selectedProject = self.projectList[index]
-            selectedProjectName = selectedProject.id ?? EMPTY
-            print("Selected Project ID: \(selectedProject.id ?? "")")
-            if let projectId = selectedProject.id {
-                self.fetchProjectConfiguration(for: projectId)
-                self.fetchPreferences(for: projectId)
-            }
-        }
-        projectNameDropdown.show()
-    }
-    
-    func showTentativePriceRangeDropdown() {
-        let options = FetchPicklistValue.shared.picklistOptionsDict["EOI_Tentative_Price_Range__c"] ?? []
-        let accountLabel = options.map { $0.label }
-        let accountValue = options.map { $0.value }
-        
-        print("EOI_Tentative_Price_Range__c Labels: \(accountLabel)")
-        print("EOI_Tentative_Price_Range__c: \(accountValue)")
-        
-        tentativePriceRangeDropdown.anchorView = projectNametxtFld
-        tentativePriceRangeDropdown.dataSource = accountValue
-        
-        tentativePriceRangeDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-            guard index < accountLabel.count else { return }
-            self?.projectNametxtFld?.text = item
-        }
-        tentativePriceRangeDropdown.show()
-    }
-    
-//    func showSubmittedByDropdown() {
-//        let options = FetchPicklistValue.shared.picklistOptionsDict["Submitted_By__c"] ?? []
-//        let accountLabel = options.map { $0.label }
-//        let accountValue = options.map { $0.value }
-//        
-//        print("Submitted_By__c Labels: \(accountLabel)")
-//        print("Submitted_By__c: \(accountValue)")
-//        
-//        submittedByDropdown.anchorView = submittedBytxtFld
-//        submittedByDropdown.dataSource = accountValue
-//        
-//        submittedByDropdown.selectionAction = { [weak self] (index: Int, item: String) in
-//            guard index < accountLabel.count else { return }
-//            self?.submittedBytxtFld?.text = item
-//        }
-//        submittedByDropdown.show()
-//    }
-    
-    func showSubmittedByDropdown() {
-        let options = FetchPicklistValue.shared
-            .picklistOptionsDict["Submitted_By__c"] ?? []
-
-        let sortedOptions = options.sorted {
-            $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending
-        }
-
-        let accountLabels = sortedOptions.map { $0.label }
-        let accountValues = sortedOptions.map { $0.value }
-
-        submittedByDropdown.anchorView = submittedBytxtFld
-        submittedByDropdown.dataSource = accountLabels
-
-        submittedByDropdown.selectionAction = { [weak self] index, _ in
-            guard index < accountValues.count else { return }
-            self?.submittedBytxtFld?.text = accountValues[index]
-        }
-
-        submittedByDropdown.show()
-    }
-        
-    func showRMNameDropdown() {
-        if !allRMUsers.isEmpty {
-            filteredRMUsers = allRMUsers
-            updateRMNameDropdown()
-            return
-        }
-        
-        showLoader(with: "Loading RM users...")
-        
-        eOIWebServices.getActiveRMUsers { [weak self] error, users, status in
-            
-            guard let self = self else { return }
-            
-            DispatchQueue.main.async {
-                
-                self.hideLoader()
-                
-                if status == .success, let users = users {
-                    
-                    self.allRMUsers = users
-                    self.filteredRMUsers = users
-                    
-                    self.updateRMNameDropdown()
-                    
-                } else {
-                    print(error ?? "Failed to fetch RM users")
-                }
-            }
-        }
-    }
-    
-    func updateRMNameDropdown() {
-        
-        let names = filteredRMUsers.compactMap { $0.name }
-        
-        if names.isEmpty {
-            RMNameDropdown.hide()
-            return
-        }
-        
-        RMNameDropdown.anchorView = RMNametxtFld
-        RMNameDropdown.dataSource = names
-        
-        // Show dropdown ABOVE the text field
-        RMNameDropdown.direction = .top
-        
-        // Optional: make dropdown same width as text field
-        RMNameDropdown.width = RMNametxtFld?.bounds.width
-        
-        RMNameDropdown.selectionAction = { [weak self] index, item in
-            
-            guard let self = self else { return }
-            
-            guard index < self.filteredRMUsers.count else {
-                return
-            }
-            
-            let selectedUser = self.filteredRMUsers[index]
-            
-            self.RMNametxtFld?.text = selectedUser.name
-            
-            self.selectedRM = selectedUser.id ?? EMPTY
-            
-            print("✅ Selected RM Name: \(selectedUser.name ?? "")")
-            print("✅ Selected RM ID: \(self.selectedRM)")
-            
-            self.RMNameDropdown.hide()
-            self.RMNametxtFld?.resignFirstResponder()
-        }
-        
-        RMNameDropdown.show()
-    }
-    
-    @objc func rmNameTextChanged(_ textField: UITextField) {
-        
-        let searchText = textField.text?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased() ?? ""
-        
-        if searchText.isEmpty {
-            filteredRMUsers = allRMUsers
-        } else {
-            filteredRMUsers = allRMUsers.filter { user in
-                let name = user.name?.lowercased() ?? ""
-                return name.contains(searchText)
-            }
-        }
-        
-        updateRMNameDropdown()
-    }
-    
-    
-    func showPreferenceDropdown(for textField: MDCOutlinedTextField, selectedPreferences: [ProjectPreferenceModel], allPreferences: [ProjectPreferenceModel], selectionAction: @escaping (ProjectPreferenceModel) -> ()) {
-        
-        let dropdown = DropDown()
-        dropdown.anchorView = textField
-        
-        let filteredPreferences = allPreferences.filter { pref in
-            !selectedPreferences.contains(where: { $0.id == pref.id })
-        }
-        
-        let names = filteredPreferences.map { $0.name ?? "" }
-        dropdown.dataSource = names
-        
-        dropdown.selectionAction = { index, item in
-            let selectedPref = filteredPreferences[index]
-            textField.text = selectedPref.name
-            selectionAction(selectedPref)
-        }
-        
-        dropdown.show()
-    }
-    
-    func fetchProjectConfiguration(for projectId: String) {
-        eOIWebServices.getProjectConfiguration(projectId: projectId) { [weak self] error, response, status in
-            guard let self = self else { return }
-            
-            if status == .success,
-               let records = response?["records"] as? [[String: Any]],
-               let record = records.first {
-                
-                let sellableArea = record["Sellable_Area__c"] as? String ?? ""
-                let priceRange = record["Price_Range__c"] as? String ?? ""
-                
-                DispatchQueue.main.async {
-                    self.tentativeSellabletxtFld?.text = sellableArea
-                    self.tentativePricetxtFld?.text = priceRange
-                }
-            } else {
-                print(error ?? "Failed to load project configuration")
-            }
-        }
-    }
-    
-    func fetchPreferences(for projectId: String) {
-        eOIWebServices.getPreferences(projectId: projectId) { [weak self] error, preferences, status in
-            guard let self = self else { return }
-            
-            if status == .success, let preferences = preferences {
-                self.preferencesList = preferences
-                print("✅ Preferences fetched: \(preferences.map { $0.name ?? "" })")
-            } else {
-                print(error ?? "Failed to load preferences")
-            }
-        }
-    }
-    
-    func handleError(step: String, error: String) {
-
-        DispatchQueue.main.async {
-
-            self.hideLoader()
-
-            Alert.showError(
-                step: step,
-                error: error,
-                on: self
-            )
-        }
-    }
-}
-
-struct Attachment {
-    var fileName: String
-    var fileURL: URL
-    var fileType: String
 }

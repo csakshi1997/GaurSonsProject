@@ -1120,69 +1120,6 @@ final class InventoryUnitDetailsBottomSheetVC: UIViewController {
                 }
             }
             
-            // STEP 2: Update Opportunity
-//            self.projectWebServices.updateRecord(
-//                objectName: "Opportunity__c",
-//                recordId: opportunityId,
-//                body: opportunityBody
-//            ) { [weak self] opportunitySuccess, opportunityError in
-//                
-//                guard let self = self else { return }
-//                
-//                // Opportunity update succeeded: blocking completed.
-//                if opportunitySuccess {
-//                    
-//                    DispatchQueue.main.async {
-//                        SwiftLoader.hide()
-//                        
-//                        self.unitDetails?.unitStatus = "Hold"
-//                        self.onUnitBlocked?(unitId)
-//                        
-//                        self.view.makeToast("Unit blocked successfully")
-//                        self.dismissSheet()
-//                    }
-//                    
-//                    return
-//                }
-//                
-//                // STEP 3: Opportunity update failed.
-//                // STEP 4: Roll back Unit Inventory to Released.
-//                let rollbackBody: [String: Any] = [
-//                    "Opportunity__c": "",
-//                    "Unit_Status__c": "Released",
-//                    "Unit_Hold_Date__c": NSNull()
-//                ]
-//                print("rollbackBody rollbackBody \(rollbackBody)")
-//                
-//                self.projectWebServices.updateRecord(
-//                    objectName: "Unit_Inventory__c",
-//                    recordId: unitId,
-//                    body: rollbackBody
-//                ) { [weak self] rollbackSuccess, rollbackError in
-//                    
-//                    guard let self = self else { return }
-//                    
-//                    DispatchQueue.main.async {
-//                        
-//                        SwiftLoader.hide()
-//                        
-//                        if rollbackSuccess {
-//                            self.unitDetails?.unitStatus = "Released"
-//                        } else {
-//                            print(
-//                                "Unit Inventory rollback failed: " +
-//                                (rollbackError ?? "Unknown error")
-//                            )
-//                        }
-//                        
-//                        // Display the original Opportunity validation error.
-//                        self.showErrorAndDismiss(
-//                            opportunityError ??
-//                            "Failed to update Opportunity"
-//                        )
-//                    }
-//                }
-//            }
         }
     }
         

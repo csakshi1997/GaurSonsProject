@@ -704,7 +704,7 @@ class EOIWebServices {
             let soqlQuery = """
             SELECT Id, Name, Sellable_Area__c, Price_Range__c, Project__r.Name 
             FROM Project_Area_Configuration__c 
-            WHERE Project__c = '\(projectId)' LIMIT 1
+            WHERE Project__c = '\(projectId)'
             """
             
             guard let encodedQuery = soqlQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),

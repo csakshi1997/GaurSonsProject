@@ -949,13 +949,23 @@ extension CustomersVC: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        let EOIDict = filteredRecord[indexPath.row]
+//        let storyboardBundle = Bundle.main
+//        let storyboard = UIStoryboard(name: "Customers", bundle: storyboardBundle)
+//        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "CustomerDetailsVC") as! CustomerDetailsVC
+//        detailsListVC.cuatomerDetailsDict = EOIDict
+//        print(EOIDict.id)
+//        self.navigationController?.pushViewController(detailsListVC, animated: true)
+//        
         let EOIDict = filteredRecord[indexPath.row]
         let storyboardBundle = Bundle.main
-        let storyboard = UIStoryboard(name: "Customers", bundle: storyboardBundle)
-        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "CustomerDetailsVC") as! CustomerDetailsVC
+        let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
+        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "miscellaneousEOIScreenVC") as! miscellaneousEOIScreenVC
         detailsListVC.cuatomerDetailsDict = EOIDict
         print(EOIDict.id)
         self.navigationController?.pushViewController(detailsListVC, animated: true)
+        
+        
     }
 }
 

@@ -23,47 +23,123 @@ class FetchPicklistValue {
     
     var picklistOptionsDict: [String: [(label: String, value: String)]] = [:]
         
+//    func fetchPicklistValues(objectName: String, fieldNames: [String]) async {
+//        
+//        let request = RestClient.shared.requestForDescribe(withObjectType: objectName, apiVersion: nil)
+//        
+//        do {
+//            print(request)
+//            let response = try await RestClient.shared.send(request: request)
+//            
+//            if let resultDict = try response.asJson() as? [String: Any],
+//               let fields = resultDict["fields"] as? [[String: Any]] {
+//                
+//                for fieldName in fieldNames {
+//                    
+//                    if let targetField = fields.first(where: { ($0["name"] as? String) == fieldName }),
+//                       let picklistValues = targetField["picklistValues"] as? [[String: Any]] {
+//                        
+//                        let values = picklistValues.compactMap { item -> (label: String, value: String)? in
+//                            
+//                            if let label = item["label"] as? String,
+//                               let value = item["value"] as? String {
+//                                return (label, value)
+//                            }
+//                            
+//                            return nil
+//                        }
+//                        
+//                        self.picklistOptionsDict[fieldName] = values
+//                        
+//                    } else {
+//                        print("Field not found: \(fieldName)")
+//                    }
+//                }
+//                
+//            } else {
+//                print("Invalid response format")
+//            }
+//            
+//        } catch {
+//            guard InternetConnectionManager.isConnectedToNetwork() else {
+//                return
+//            }
+//            handleSalesforceError(error)
+//        }
+//    }
+    
+    
     func fetchPicklistValues(objectName: String, fieldNames: [String]) async {
-        
-        let request = RestClient.shared.requestForDescribe(withObjectType: objectName, apiVersion: nil)
-        
+
+        let request = RestClient.shared.requestForDescribe(
+            withObjectType: objectName,
+            apiVersion: nil
+        )
+
         do {
-            
+            print("\n========== SALESFORCE DESCRIBE REQUEST ==========")
+            print("Object Name: \(objectName)")
+            print("Requested Fields: \(fieldNames)")
+            print("Request: \(request)")
+            print("=================================================\n")
+
             let response = try await RestClient.shared.send(request: request)
-            
-            if let resultDict = try response.asJson() as? [String: Any],
-               let fields = resultDict["fields"] as? [[String: Any]] {
-                
-                for fieldName in fieldNames {
-                    
-                    if let targetField = fields.first(where: { ($0["name"] as? String) == fieldName }),
-                       let picklistValues = targetField["picklistValues"] as? [[String: Any]] {
-                        
-                        let values = picklistValues.compactMap { item -> (label: String, value: String)? in
-                            
-                            if let label = item["label"] as? String,
-                               let value = item["value"] as? String {
-                                return (label, value)
-                            }
-                            
+
+            let responseDict = try response.asJson() as? [String: Any]
+
+            guard let resultDict = responseDict,
+                  let fields = resultDict["fields"] as? [[String: Any]] else {
+                print("❌ Invalid Describe API response")
+                print("Response: \(String(describing: responseDict))")
+                return
+            }
+
+            print("\n========== SALESFORCE DESCRIBE RESPONSE ==========")
+
+            for fieldName in fieldNames {
+
+                if let targetField = fields.first(where: {
+                    ($0["name"] as? String) == fieldName
+                }) {
+
+                    print("\n✅ Field Found: \(fieldName)")
+                    print("Field Type: \(targetField["type"] ?? "Unknown")")
+
+                    let picklistValues = targetField["picklistValues"] as? [[String: Any]] ?? []
+
+                    print("Picklist Count: \(picklistValues.count)")
+
+                    let values = picklistValues.compactMap {
+                        item -> (label: String, value: String)? in
+
+                        guard let label = item["label"] as? String,
+                              let value = item["value"] as? String else {
                             return nil
                         }
-                        
-                        self.picklistOptionsDict[fieldName] = values
-                        
-                    } else {
-                        print("Field not found: \(fieldName)")
+
+                        print("Label: \(label) | Value: \(value)")
+
+                        return (label, value)
                     }
+
+                    self.picklistOptionsDict[fieldName] = values
+
+                } else {
+                    print("\n❌ Field Not Found: \(fieldName)")
                 }
-                
-            } else {
-                print("Invalid response format")
             }
-            
+
+            print("\nAvailable Salesforce Fields:")
+            print(fields.compactMap { $0["name"] as? String })
+
+            print("==================================================\n")
+
         } catch {
             guard InternetConnectionManager.isConnectedToNetwork() else {
                 return
             }
+
+            print("❌ Describe API Error: \(error)")
             handleSalesforceError(error)
         }
     }

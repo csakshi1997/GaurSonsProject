@@ -16,6 +16,7 @@ class PropertyDetailVc: UIViewController {
     @IBOutlet var unitInventoryNameLbl: UILabel?
     @IBOutlet var unitBookingDateTimeLbl: UILabel?
     @IBOutlet var ECPAareaLbl: UILabel?
+    @IBOutlet var unitStatusLbl: UILabel?
     @IBOutlet var carpetAreaLbl: UILabel?
     @IBOutlet var saleableAreaLbl: UILabel?
     @IBOutlet var basementAreaLbl: UILabel?
@@ -44,6 +45,7 @@ class PropertyDetailVc: UIViewController {
         basementAreaLbl?.text = propertyModel.basementArea != nil ? "\(propertyModel.basementArea!)" : "-"
         builtupAreaLbl?.text = propertyModel.builtupArea != nil ? "\(propertyModel.builtupArea!)" : "-"
         roofAreaLbl?.text = propertyModel.roofArea != nil ? "\(propertyModel.roofArea!)" : "-"
+        unitStatusLbl?.text = propertyModel.unitStatus != nil ? "\(propertyModel.unitStatus!)" : "-"
     }
     
     @IBAction func crossAction() {

@@ -1409,11 +1409,11 @@ class PersonalEOIScreenVC: UIViewController {
             print("📍 Address:", address)
         }
         
-        // 🔒 Disable fields (recommended)
+        // Disable verified Aadhaar fields, but keep Name of Relative editable.
         self.applicantNametxtFld?.isEnabled = false
         self.DOBtxtFld?.isEnabled = false
         self.gendertxtFld?.isEnabled = false
-        self.relativeNametxtFld?.isEnabled = false
+        self.relativeNametxtFld?.isEnabled = true
     }
     
     func generateReferenceId() -> String {
@@ -1586,7 +1586,7 @@ class PersonalEOIScreenVC: UIViewController {
     
     func saveApplicantData() -> Bool {
 
-        guard validateRequiredFields() else { return false }
+//        guard validateRequiredFields() else { return false }
 
         if !isForEditing && !isCustomerDetailsFillYES && isResidentIndian {
             
