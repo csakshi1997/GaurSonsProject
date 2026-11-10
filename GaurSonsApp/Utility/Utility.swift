@@ -56,12 +56,44 @@ class Utility {
         return superView!.convert(pnt, to: baseView)
     }
     
+//    static func gotoTabbar() {
+//        let storyBoard : UIStoryboard = UIStoryboard(name: "Tabbar", bundle:nil)
+//        tabbarView = storyBoard.instantiateViewController(withIdentifier: "TabbarView") as? TabbarView
+//        SceneDelegate.getSceneDelegate().navigationController = UINavigationController(rootViewController: tabbarView ?? TabbarView())
+//        SceneDelegate.getSceneDelegate().navigationController?.isNavigationBarHidden = true
+//        SceneDelegate.getSceneDelegate().window!.rootViewController = SceneDelegate.getSceneDelegate().navigationController
+//    }
+    
     static func gotoTabbar() {
-        let storyBoard : UIStoryboard = UIStoryboard(name: "Tabbar", bundle:nil)
-        tabbarView = storyBoard.instantiateViewController(withIdentifier: "TabbarView") as? TabbarView
-        SceneDelegate.getSceneDelegate().navigationController = UINavigationController(rootViewController: tabbarView ?? TabbarView())
-        SceneDelegate.getSceneDelegate().navigationController?.isNavigationBarHidden = true
-        SceneDelegate.getSceneDelegate().window!.rootViewController = SceneDelegate.getSceneDelegate().navigationController
+        DispatchQueue.main.async {
+
+            let storyboard = UIStoryboard(name: "Tabbar", bundle: nil)
+
+            guard let tabbarVC = storyboard.instantiateViewController(
+                withIdentifier: "TabbarView"
+            ) as? TabbarView else {
+                print("❌ Unable to instantiate TabbarView")
+                return
+            }
+
+            guard let sceneDelegate = UIApplication.shared.connectedScenes
+                .compactMap({ $0.delegate as? SceneDelegate })
+                .first,
+                  let window = sceneDelegate.window else {
+                print("❌ SceneDelegate window not found")
+                return
+            }
+
+            let navigationController = UINavigationController(
+                rootViewController: tabbarVC
+            )
+
+            navigationController.isNavigationBarHidden = true
+
+            sceneDelegate.navigationController = navigationController
+            window.rootViewController = navigationController
+            window.makeKeyAndVisible()
+        }
     }
     
 //    static func gotoEoi() {

@@ -74,11 +74,11 @@ class AppDelegate : UIResponder, UIApplicationDelegate {
 //        window?.rootViewController = initialVC
 //        window?.makeKeyAndVisible()
         
-        window = UIWindow(frame: UIScreen.main.bounds)
-        let storyboard = UIStoryboard(name: "EOI", bundle: nil)
-        let initialVC = storyboard.instantiateViewController(withIdentifier: "EOIVC")
-        window?.rootViewController = initialVC
-        window?.makeKeyAndVisible()
+//        window = UIWindow(frame: UIScreen.main.bounds)
+//        let storyboard = UIStoryboard(name: "EOI", bundle: nil)
+//        let initialVC = storyboard.instantiateViewController(withIdentifier: "EOIVC")
+//        window?.rootViewController = initialVC
+//        window?.makeKeyAndVisible()
         return true
     }
 

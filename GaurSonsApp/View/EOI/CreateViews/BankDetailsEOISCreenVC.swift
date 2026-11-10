@@ -261,7 +261,7 @@ class BankDetailsEOISCreenVC: UIViewController, UITextFieldDelegate {
     
     @IBAction func nextBtnAction() {
 
-//        guard validateBankDetails() else { return }
+        guard validateBankDetails() else { return }
 
         var applicant: SaveModel
 

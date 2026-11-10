@@ -1256,7 +1256,7 @@ class AddressEOIScreenVC: UIViewController {
     }
     
     @IBAction func nextBtnAction() {
-//        guard validateFields() else { return }
+        guard validateFields() else { return }
         var applicant: SaveModel
 
         if let index = applicantIndex {

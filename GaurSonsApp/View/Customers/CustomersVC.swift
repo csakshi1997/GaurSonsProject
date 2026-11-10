@@ -181,125 +181,6 @@ class CustomersVC: UIViewController {
         }
     }
     
-//    func getCustomer() {
-//        guard InternetConnectionManager.isConnectedToNetwork() else {
-//            isLoading = false
-//            spinner.stopAnimating()
-//            showEmptyState(.noInternet)
-//            return
-//        }
-//
-//        guard !isLoading else { return }
-//        guard !isFilteredListActive else { return }
-//
-//        // Set loading state only here
-//        isLoading = true
-//
-//        if pageNumber == 1 {
-//            hideEmptyState()
-//        }
-//
-//        let requestedPage = pageNumber
-//
-//        let filterToUse: CustomerSummaryFilter? =
-//            isServerFilterApplied ? nil : summaryFilter
-//
-//        print("Requesting customer page:", requestedPage)
-//
-//        Utility.getAllCustomerRecords(
-//            pageNumber: requestedPage,
-//            summaryFilter: filterToUse
-//        ) { [weak self] success in
-//
-//            guard let self = self else { return }
-//
-//            DispatchQueue.main.async {
-//
-//                self.isLoading = false
-//                self.spinner.stopAnimating()
-//
-//                guard success else {
-//
-//                    if self.pageNumber == requestedPage,
-//                       requestedPage > 1 {
-//                        self.pageNumber -= 1
-//                    }
-//
-//                    if self.customerModelData.isEmpty {
-//                        self.showEmptyState(.noResults)
-//                    }
-//
-//                    return
-//                }
-//
-//                let fetchedCustomers = GlobalData.allCustomerModel
-//
-//                if requestedPage == 1 {
-//                    self.customerModelData.removeAll()
-//                }
-//
-//                var existingIDs = Set(
-//                    self.customerModelData.compactMap { $0.id }
-//                )
-//
-//                for customer in fetchedCustomers {
-//
-//                    guard let customerID = customer.id else {
-//                        self.customerModelData.append(customer)
-//                        continue
-//                    }
-//
-//                    if existingIDs.insert(customerID).inserted {
-//                        self.customerModelData.append(customer)
-//                    }
-//                }
-//
-//                print("Requested page:", requestedPage)
-//                print("Records returned:", fetchedCustomers.count)
-//                print("Unique customers:", self.customerModelData.count)
-//
-//                self.applyCombinedFilters()
-//            }
-//        }
-//    }
-        
-//    func getFilteredCustomers(soql: String) {
-//
-//        if !InternetConnectionManager.isConnectedToNetwork() {
-//            showEmptyState(.noInternet)
-//            return
-//        }
-//
-//        hideEmptyState()
-//
-//        Utility.getAllCustomerRecords(
-//            pageNumber: 1,
-//            soqlFilter: soql
-//        ) { success in
-//
-//            DispatchQueue.main.async {
-//
-//                self.isLoading = false
-//                self.spinner.stopAnimating()
-//
-//                guard success else {
-//                    self.showEmptyState(.noResults)
-//                    return
-//                }
-//
-//                self.customerModelData = GlobalData.allCustomerModel
-//                self.filteredRecord = GlobalData.allCustomerModel
-//
-//                if self.filteredRecord.isEmpty {
-//                    self.showEmptyState(.noResults)
-//                } else {
-//                    self.hideEmptyState()
-//                    self.tbleview?.reloadData()
-//                }
-//            }
-//        }
-//    }
-    
     func getFilteredCustomers(soql: String) {
 
         guard InternetConnectionManager.isConnectedToNetwork() else {
@@ -415,20 +296,7 @@ class CustomersVC: UIViewController {
         noDataFoundVw?.isHidden = true
         tbleview?.isHidden = false
     }
-    
-//    func setUpUI() {
-//        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
-//        tapGesture.cancelsTouchesInView = false
-//        view.addGestureRecognizer(tapGesture)
-//        tbleview?.keyboardDismissMode = .onDrag
-//        tbleview?.tableFooterView = createSpinnerFooter()
-//        searchVw?.delegate = self
-//        noDataFoundVw?.isHidden = true
-//        mainVw?.backgroundColor = ColorConstant.screensBackgroundColor
-//        addNewBtn?.layer.cornerRadius = 6
-//        
-//    }
-    
+        
     func setUpUI() {
 
         let tapGesture = UITapGestureRecognizer(
@@ -538,18 +406,6 @@ class CustomersVC: UIViewController {
         filtersView?.removeFromSuperview()
     }
     
-//    @IBAction func refreshAction(_ sender: UIButton) {
-//        pageNumber = 1
-//        if !InternetConnectionManager.isConnectedToNetwork() {
-//            
-//            showEmptyState(.noInternet)
-//            
-//            return
-//            
-//        }
-//        getCustomer()
-//    }
-    
     @IBAction func refreshAction(_ sender: UIButton) {
 
         // Reset pagination and loading state.
@@ -588,14 +444,6 @@ class CustomersVC: UIViewController {
         // Reload all customers from page 1.
         getCustomer()
     }
-    
-//    @IBAction func allBtnTapped(_ sender: UIButton) {
-//        updateButtonSelection(sender, filter: .all)
-//        pageNumber = 1
-//        isServerFilterApplied = false
-//
-//        getCustomer()
-//    }
     
     @IBAction func allBtnTapped(_ sender: UIButton) {
 
@@ -839,12 +687,6 @@ class CustomersVC: UIViewController {
     }
     
     @IBAction func menuButtonTapped(_ sender: UIButton) {
-        //        let storyboard = UIStoryboard(name: "Home", bundle: nil)
-        //        if let sideMenuVC = storyboard.instantiateViewController(withIdentifier: "SideBarVC") as? SideBarVC {
-        //            presentFromLeft80Percent(sideMenuVC)
-        //        } else {
-        //            showAlert(with: "Error", message: "❌ Could not instantiate SideBarVC from Home.storyboard")
-        //        }
         Utility.gotoTabbar()
     }
     
@@ -874,23 +716,6 @@ class CustomersVC: UIViewController {
         }
     }
 }
-
-//extension CustomersVC: UIScrollViewDelegate {
-//    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-//        let offsetY = scrollView.contentOffset.y
-//        let contentHeight = scrollView.contentSize.height
-//        let frameHeight = scrollView.frame.size.height
-//        
-//        if offsetY > contentHeight - frameHeight - 50 {
-//            if !isLoading {
-//                pageNumber += 1
-//                isLoading = true
-//                spinner.startAnimating()
-//                getCustomer()
-//            }
-//        }
-//    }
-//}
 
 extension CustomersVC: UIScrollViewDelegate {
 
@@ -949,21 +774,20 @@ extension CustomersVC: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let EOIDict = filteredRecord[indexPath.row]
+        let storyboardBundle = Bundle.main
+        let storyboard = UIStoryboard(name: "Customers", bundle: storyboardBundle)
+        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "CustomerDetailsVC") as! CustomerDetailsVC
+        detailsListVC.cuatomerDetailsDict = EOIDict
+        self.navigationController?.pushViewController(detailsListVC, animated: true)
+//        
 //        let EOIDict = filteredRecord[indexPath.row]
 //        let storyboardBundle = Bundle.main
-//        let storyboard = UIStoryboard(name: "Customers", bundle: storyboardBundle)
-//        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "CustomerDetailsVC") as! CustomerDetailsVC
+//        let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
+//        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "miscellaneousEOIScreenVC") as! miscellaneousEOIScreenVC
 //        detailsListVC.cuatomerDetailsDict = EOIDict
 //        print(EOIDict.id)
 //        self.navigationController?.pushViewController(detailsListVC, animated: true)
-//        
-        let EOIDict = filteredRecord[indexPath.row]
-        let storyboardBundle = Bundle.main
-        let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
-        let detailsListVC = storyboard.instantiateViewController(withIdentifier: "miscellaneousEOIScreenVC") as! miscellaneousEOIScreenVC
-        detailsListVC.cuatomerDetailsDict = EOIDict
-        print(EOIDict.id)
-        self.navigationController?.pushViewController(detailsListVC, animated: true)
         
         
     }
@@ -996,38 +820,6 @@ extension CustomersVC: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
-    
-//    func applyCombinedFilters() {
-//
-//        let searchText = currentSearchText
-//            .trimmingCharacters(in: .whitespacesAndNewlines)
-//            .lowercased()
-//
-//        // When search is empty, reset the table to the original data
-//        guard !searchText.isEmpty else {
-//            filteredRecord = customerModelData
-//            hideEmptyState()
-//            tbleview?.reloadData()
-//            return
-//        }
-//
-//        // Apply search
-//        filteredRecord = customerModelData.filter {
-//            ($0.name?.lowercased().contains(searchText) ?? false) ||
-//            ($0.mobile?.lowercased().contains(searchText) ?? false) ||
-//            ($0.email?.lowercased().contains(searchText) ?? false) ||
-//            ($0.project?.name?.lowercased().contains(searchText) ?? false) ||
-//            ($0.createdBy?.name?.lowercased().contains(searchText) ?? false)
-//        }
-//
-//        if filteredRecord.isEmpty {
-//            showEmptyState(.noResults)
-//        } else {
-//            hideEmptyState()
-//            tbleview?.reloadData()
-//        }
-//    }
-    
     func applyCombinedFilters() {
 
         var results = customerModelData

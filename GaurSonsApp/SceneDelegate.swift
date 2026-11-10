@@ -37,70 +37,71 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                openURLContexts urlContexts: Set<UIOpenURLContext>)
     {
   
-        // Uncomment when enabling log in via Salesforce UI Bridge API generated QR codes.
-        /*
-         * Note: The app's Info.plist must be updated with the URL type, scheme
-         * and any other desired options to support custom URL scheme deep links
-         * for the QR login code.  It is possible to use universal links for
-         * this also so long as the app is configured, the UI bridge API
-         * parameters are obtained and passed to
-         * LoginTypeSelectionViewController.loginWithFrontdoorBridgeUrl
-         */
-//        // When the app process was running and receives a custom URL scheme deep link, use login QR code if applicable.
-//        if let urlContext = urlContexts.first {
-//            useQrCodeLogInUrl(urlContext.url)
-//        }
     }
-    
-//    func scene(_ scene: UIScene,
-//               willConnectTo session: UISceneSession,
-//               options connectionOptions: UIScene.ConnectionOptions)
-//    {
-//        
-//        guard let windowScene = (scene as? UIWindowScene) else { return }
-//        self.window = UIWindow(frame: windowScene.coordinateSpace.bounds)
-//        self.window?.windowScene = windowScene
-//        
-//        AuthHelper.registerBlock(forCurrentUserChangeNotifications: {
-//            self.resetViewState {
-//                //               self.redirectHomeScreen()
-//                Utility.gotoTabbar()
-//            }
-//        })
-//        self.redirectHomeScreen()
-//        if let urlContext = connectionOptions.urlContexts.first {
-//            useQrCodeLogInUrl(urlContext.url)
-//        }
-//    }
     
     static func getSceneDelegate() -> SceneDelegate {
         return UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate
     }
     
-    func scene(_ scene: UIScene,
-               willConnectTo session: UISceneSession,
-               options connectionOptions: UIScene.ConnectionOptions) {
-
-        guard let windowScene = (scene as? UIWindowScene) else { return }
-        self.window = UIWindow(frame: windowScene.coordinateSpace.bounds)
-        self.window?.windowScene = windowScene
-
-        // 👉 Always load InitialVw first
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let initialVC = storyboard.instantiateViewController(withIdentifier: "InitialVw")
-        let navController = UINavigationController(rootViewController: initialVC)
-        navController.setNavigationBarHidden(true, animated: false)
-        self.window?.rootViewController = navController
-        self.window?.makeKeyAndVisible()
-        
-//        let storyboard = UIStoryboard(name: "EOI", bundle: nil)
-//        let initialVC = storyboard.instantiateViewController(withIdentifier: "EOIVC")
+//    func scene(_ scene: UIScene,
+//               willConnectTo session: UISceneSession,
+//               options connectionOptions: UIScene.ConnectionOptions) {
+//
+//        guard let windowScene = (scene as? UIWindowScene) else { return }
+//        self.window = UIWindow(frame: windowScene.coordinateSpace.bounds)
+//        self.window?.windowScene = windowScene
+//
+//        // 👉 Always load InitialVw first
+//        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+//        let initialVC = storyboard.instantiateViewController(withIdentifier: "InitialVw")
 //        let navController = UINavigationController(rootViewController: initialVC)
 //        navController.setNavigationBarHidden(true, animated: false)
 //        self.window?.rootViewController = navController
 //        self.window?.makeKeyAndVisible()
+//        
+////        let storyboard = UIStoryboard(name: "EOI", bundle: nil)
+////        let initialVC = storyboard.instantiateViewController(withIdentifier: "EOIVC")
+////        let navController = UINavigationController(rootViewController: initialVC)
+////        navController.setNavigationBarHidden(true, animated: false)
+////        self.window?.rootViewController = navController
+////        self.window?.makeKeyAndVisible()
+//
+//        // Remove auto login from here
+//    }
+    
+    func scene(
+        _ scene: UIScene,
+        willConnectTo session: UISceneSession,
+        options connectionOptions: UIScene.ConnectionOptions
+    ) {
+        guard let windowScene = scene as? UIWindowScene else { return }
 
-        // Remove auto login from here
+        self.window = UIWindow(windowScene: windowScene)
+
+        if UserAccountManager.shared.currentUserAccount != nil {
+
+            MobileSyncSDKManager.shared.setupUserStoreFromDefaultConfig()
+            MobileSyncSDKManager.shared.setupUserSyncsFromDefaultConfig()
+
+            Utility.gotoTabbar()
+
+        } else {
+
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+
+            let initialVC = storyboard.instantiateViewController(
+                withIdentifier: "InitialVw"
+            )
+
+            let navController = UINavigationController(
+                rootViewController: initialVC
+            )
+
+            navController.setNavigationBarHidden(true, animated: false)
+
+            self.window?.rootViewController = navController
+            self.window?.makeKeyAndVisible()
+        }
     }
     
     func redirectHomeScreen() {
@@ -140,7 +141,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
-        self.initializeAppViewState()
+//        self.initializeAppViewState()
 //        AuthHelper.loginIfRequired {
 ////            self.redirectHomeScreen()
 //            Utility.gotoTabbar()

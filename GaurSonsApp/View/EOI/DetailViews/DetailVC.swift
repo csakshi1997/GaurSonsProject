@@ -158,6 +158,7 @@ class DetailVC: UIViewController {
     var applicantDetailsModel = ApplicantDetailsModel(dict: [:])
     private var isFetchingEOIAfterTimerExpires = false
     private var hasHandledTimerExpiration = false
+    var paymentWebService = PaymentWebService()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -185,7 +186,8 @@ class DetailVC: UIViewController {
         layout.estimatedItemSize = .zero
         topCollectionView.collectionViewLayout = layout
         topCollectionView.showsHorizontalScrollIndicator = false
-        startCountdown()
+//        startCountdown()
+        checkOpportunityForCountdown()
     }
     
     override func viewDidLayoutSubviews() {
@@ -204,6 +206,74 @@ class DetailVC: UIViewController {
 //            isDataUpdated = false
             getEOI()
             fetchPropertyData()
+        }
+    }
+    
+    func checkOpportunityForCountdown() {
+
+        let opportunityId = EOiModelDict.id ?? EMPTY
+
+        print("🔍 Checking timer visibility for Opportunity: \(opportunityId)")
+
+        // Hide timer until Salesforce validation completes.
+        hideCountdownTimer()
+
+        guard !opportunityId.isEmpty else {
+            print("❌ Opportunity ID missing")
+            return
+        }
+
+        paymentWebService.checkTimmerStatus(oppId: opportunityId) { [weak self] error, response, status in
+
+            DispatchQueue.main.async {
+
+                guard let self = self else { return }
+
+                guard status == .success,
+                      let response = response,
+                      let records = response["records"] as? [[String: Any]],
+                      let opportunity = records.first else {
+
+                    print("❌ Failed to fetch Opportunity details: \(error ?? EMPTY)")
+                    self.hideCountdownTimer()
+                    return
+                }
+
+                // Fetch latest Salesforce Opportunity values.
+                let stage = opportunity["Stage__c"] as? String ?? EMPTY
+
+                let paymentCount: Double
+
+                if let count = opportunity["CountPaymentDetailRec__c"] as? NSNumber {
+                    paymentCount = count.doubleValue
+                } else if let count = opportunity["CountPaymentDetailRec__c"] as? Double {
+                    paymentCount = count
+                } else {
+                    print("❌ Payment detail count is missing or invalid")
+                    self.hideCountdownTimer()
+                    return
+                }
+
+                print("📌 Opportunity Stage: \(stage)")
+                print("📌 Payment Detail Count: \(paymentCount)")
+
+                // Timer visibility validation.
+                if stage == "Payment Detail" && paymentCount < 1 {
+
+                    print("✅ Conditions satisfied. Showing timer.")
+
+                    self.startCountdown()
+
+                } else {
+
+                    print("⛔ Conditions not satisfied. Hiding timer.")
+
+                    self.countdownTimer?.invalidate()
+                    self.countdownTimer = nil
+
+                    self.hideCountdownTimer()
+                }
+            }
         }
     }
     
@@ -248,7 +318,8 @@ class DetailVC: UIViewController {
                 print("Minutes: \(updatedEOI.project?.minutesToReleaseUnits ?? 0)")
 
                 self.hasHandledTimerExpiration = false
-                self.startCountdown()
+//                self.startCountdown()
+                self.checkOpportunityForCountdown()
             }
         })
     }
@@ -343,7 +414,8 @@ class DetailVC: UIViewController {
                 if releaseDate > Date() {
                     // A valid future release time exists.
                     self.hasHandledTimerExpiration = false
-                    self.startCountdown()
+                    self.checkOpportunityForCountdown()
+//                    self.startCountdown()
                 } else {
                     // The hold time is still expired.
                     self.hideCountdownTimer()
@@ -1261,175 +1333,10 @@ extension DetailVC: UIImagePickerControllerDelegate, UINavigationControllerDeleg
             return nil
         }
     }
-        
-//    func startCountdown() {
-//
-//        guard let holdTimeString = EOiModelDict.Unit_Hold_Date_Time__c,
-//              let releaseMinutes = EOiModelDict.project?.minutesToReleaseUnits else {
-//
-//            hideCountdownTimer()
-//            return
-//        }
-//
-//        let formatter = DateFormatter()
-//        formatter.locale = Locale(identifier: "en_US_POSIX")
-//        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-//        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-//
-//        // Example:
-//        // 2026-05-26T11:58:15.000+0000
-//        //
-//        // We intentionally ignore +0000 because your requirement
-//        // treats 11:58:15 as India/local time.
-//
-//        let apiDateWithoutTimezone = String(holdTimeString.prefix(23))
-//
-//        guard let holdDate = formatter.date(
-//            from: apiDateWithoutTimezone
-//        ) else {
-//
-//            print("❌ Invalid hold date:", holdTimeString)
-//            hideCountdownTimer()
-//            return
-//        }
-//
-//        // Hold time + minutesToReleaseUnits
-//        let releaseDate = holdDate.addingTimeInterval(
-//            releaseMinutes * 60
-//        )
-//
-//        // Get CURRENT INDIA TIME
-//        let currentIndiaString = formatter.string(from: Date())
-//
-//        guard let currentIndiaDate = formatter.date(
-//            from: currentIndiaString
-//        ) else {
-//
-//            hideCountdownTimer()
-//            return
-//        }
-//
-//        let remainingSeconds =
-//            releaseDate.timeIntervalSince(currentIndiaDate)
-//
-//        print("========== TIMER ==========")
-//        print("API Hold Time :", holdTimeString)
-//        print("Hold Time     :", formatter.string(from: holdDate))
-//        print("Release Time  :", formatter.string(from: releaseDate))
-//        print("Current India :", currentIndiaString)
-//        print("Release Min   :", releaseMinutes)
-//        print("Remaining     :", remainingSeconds)
-//        print("============================")
-//
-//        guard remainingSeconds > 0 else {
-//
-//            countdownTimer?.invalidate()
-//            countdownTimer = nil
-//            totalTimeInSeconds = 0
-//
-//            hideCountdownTimer()
-//
-//            print("⏰ TIMER EXPIRED")
-//            if !hasHandledTimerExpiration {
-//
-//                    hasHandledTimerExpiration = true
-//
-//                    fetchEOIDetailsAfterTimerExpires()
-//
-//                }
-//            return
-//        }
-//
-//        totalTimeInSeconds = Int(ceil(remainingSeconds))
-//
-//        Helper.showTimer(
-//            timerHeight: timerHeight,
-//            timerBtn: timerBtn,
-//            timerLeftImgBtn: timerLeftImgBtn,
-//            timer1Lbl: timer1Lbl,
-//            timer2Lbl: timer2Lbl,
-//            view: view
-//        )
-//
-//        updateTimerButtonTitle()
-//
-//        countdownTimer?.invalidate()
-//
-//        countdownTimer = Timer.scheduledTimer(
-//            withTimeInterval: 1.0,
-//            repeats: true
-//        ) { [weak self] timer in
-//
-//            guard let self = self else {
-//                timer.invalidate()
-//                return
-//            }
-//
-//            let currentIndiaString = formatter.string(from: Date())
-//
-//            guard let currentIndiaDate = formatter.date(
-//                from: currentIndiaString
-//            ) else {
-//                return
-//            }
-//
-//            let remaining =
-//                releaseDate.timeIntervalSince(currentIndiaDate)
-//
-//            if remaining > 0 {
-//
-//                self.totalTimeInSeconds = Int(ceil(remaining))
-//                self.updateTimerButtonTitle()
-//
-////            } else {
-////
-////                timer.invalidate()
-////                self.countdownTimer = nil
-////
-////                self.totalTimeInSeconds = 0
-////
-////                self.hideCountdownTimer()
-////
-////                print("⏰ TIMER FINISHED")
-////                if !self.hasHandledTimerExpiration {
-////
-////                        self.hasHandledTimerExpiration = true
-////
-////                        self.fetchEOIDetailsAfterTimerExpires()
-////
-////                    }
-////
-////                
-////            }
-//            } else {
-//                timer.invalidate()
-//                self.countdownTimer = nil
-//                self.totalTimeInSeconds = 0
-//                self.hideCountdownTimer()
-//
-//                print("⏰ TIMER FINISHED")
-//                print("hasHandledTimerExpiration:", self.hasHandledTimerExpiration)
-//                print("isFetchingEOIAfterTimerExpires:", self.isFetchingEOIAfterTimerExpires)
-//
-//                if !self.hasHandledTimerExpiration {
-//                    self.hasHandledTimerExpiration = true
-//
-//                    print("✅ Calling fetchEOIDetailsAfterTimerExpires()")
-//                    self.fetchEOIDetailsAfterTimerExpires()
-//                } else {
-//                    print("⚠️ Timer expiration already handled; skipping duplicate call")
-//                }
-//            }
-//        }
-//
-//        RunLoop.main.add(
-//            countdownTimer!,
-//            forMode: .common
-//        )
-//    }
     
     func startCountdown() {
-
+print(EOiModelDict.Unit_Hold_Date_Time__c)
+        print(EOiModelDict.project?.minutesToReleaseUnits)
         guard let holdTimeString = EOiModelDict.Unit_Hold_Date_Time__c,
               let releaseMinutes = EOiModelDict.project?.minutesToReleaseUnits else {
 
@@ -1686,15 +1593,6 @@ extension DetailVC: UITableViewDelegate, UITableViewDataSource {
         } else if tableView == applicantTableView {
             let cell: ApplicantTableViewCell = tableView.dequeueReusableCell(withIdentifier: "ApplicantTableViewCell", for: indexPath) as! ApplicantTableViewCell
             let applicantDict = filteredApplicantRecord[indexPath.row]
-//            if applicantDict.opportunity?.applicantType == "Individual" || applicantDict.opportunity?.applicantType == "Partnership" {
-//                if let isPrimary = applicantDict.primary {
-//                    cell.primaryLbl?.text = isPrimary ? "Yes" : "No"
-//                } else {
-//                    cell.primaryLbl?.text = ""
-//                }
-//            } else {
-//                cell.primaryLbl?.text = applicantDict.primary
-//            }
             if let isPrimary = applicantDict.primary {
                 cell.primaryLbl?.text = isPrimary ? "Yes" : "No"
             }
@@ -1772,20 +1670,8 @@ extension DetailVC: UITableViewDelegate, UITableViewDataSource {
                 self.present(alert, animated: true, completion: nil)
             }
             
-//            cell.onEditTapped = {
-//                Defaults.isOpportunityIDPresent = true
-//                Defaults.opportunityId = self.filteredApplicantRecord[indexPath.row].opportunity?.id
-//                let storyboardBundle = Bundle.main
-//                let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
-//                let personalEOIScreenVC = storyboard.instantiateViewController(withIdentifier: "PersonalEOIScreenVC") as! PersonalEOIScreenVC
-//                personalEOIScreenVC.isForEditing = true
-//                personalEOIScreenVC.applicantRecord = self.filteredApplicantRecord[indexPath.row]
-//                Defaults.type = self.filteredApplicantRecord[indexPath.row].opportunity?.applicantType
-//                self.navigationController?.pushViewController(personalEOIScreenVC, animated: true)
-//            }
             cell.onEditTapped = {
 
-//                let applicantData = self.filteredApplicantRecord[indexPath.row]
                 Defaults.isOpportunityIDPresent = true
                 Defaults.opportunityId = applicantDict.opportunity?.id
                 Defaults.type = applicantDict.opportunity?.applicantType
@@ -1866,24 +1752,7 @@ extension DetailVC: UITableViewDelegate, UITableViewDataSource {
         }
         
         if tableView == approvalTableView {
-//            let paymentDict = filteredPaymentRecord[indexPath.row]
-//            let storyboardBundle = Bundle.main
-//            let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
-//            let detailsListVC = storyboard.instantiateViewController(withIdentifier: "PaymentDetailVC") as! PaymentDetailVC
-//            detailsListVC.paymentDict = paymentDict
-//            detailsListVC.paymentMode = paymentDict.paymentMode ?? EMPTY
-//            detailsListVC.isFromApproval = true
-//            self.navigationController?.present(detailsListVC, animated: true)
         }
-        
-//        if tableView == propertyTableView {
-//            let propertArr = propertyArr[indexPath.row]
-//            let storyboardBundle = Bundle.main
-//            let storyboard = UIStoryboard(name: "EOI", bundle: storyboardBundle)
-//            let detailsListVC = storyboard.instantiateViewController(withIdentifier: "PropertyDetailVc") as! PropertyDetailVc
-//            detailsListVC.propertyModel = propertArr
-//            self.navigationController?.present(detailsListVC, animated: true)
-//        }
         if tableView == propertyTableView {
             let propertArr = propertyArr[indexPath.row]
 

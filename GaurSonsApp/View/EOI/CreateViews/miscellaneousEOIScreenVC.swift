@@ -98,6 +98,9 @@ class miscellaneousEOIScreenVC: UIViewController, UIImagePickerControllerDelegat
             let id = (data?["records"] as? [[String: Any]])?.first?["Id"] as? String
             self.customerRecordTypeId = id ?? EMPTY
         }
+        tentativePricetxtFld?.isUserInteractionEnabled = false
+
+            tentativePricetxtFld?.isEnabled = false
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -479,33 +482,7 @@ extension miscellaneousEOIScreenVC: UITextFieldDelegate {
             }
         }
     }
-        
-//    func showTentativeSellableAreaDropdown() {
-//
-//        guard !sellableAreaOptions.isEmpty else {
-//            print("No Sellable Area options available")
-//            return
-//        }
-//
-//        tentativeSellableAreaDropdown.anchorView = tentativeSellabletxtFld
-//        tentativeSellableAreaDropdown.dataSource = sellableAreaOptions
-//        tentativeSellableAreaDropdown.direction = .bottom
-//
-//        tentativeSellableAreaDropdown.selectionAction = { [weak self] index, item in
-//
-//            guard let self = self else { return }
-//
-//            self.tentativeSellabletxtFld?.text = item
-//
-//            self.tentativeSellableAreaDropdown.hide()
-//            self.tentativeSellabletxtFld?.resignFirstResponder()
-//
-//            print("Selected Sellable Area: \(item)")
-//        }
-//
-//        tentativeSellableAreaDropdown.show()
-//    }
-    
+            
     func showTentativeSellableAreaDropdown() {
 
         guard !sellableAreaOptions.isEmpty else {
@@ -523,7 +500,6 @@ extension miscellaneousEOIScreenVC: UITextFieldDelegate {
 
             self.tentativeSellabletxtFld?.text = item
 
-            // Find the configuration matching the selected Sellable Area.
             if let selectedConfiguration = self.projectAreaConfigurations.first(where: {
                 ($0["Sellable_Area__c"] as? String) == item
             }) {
@@ -538,7 +514,6 @@ extension miscellaneousEOIScreenVC: UITextFieldDelegate {
             } else {
                 self.tentativePricetxtFld?.text = ""
             }
-
             self.tentativeSellableAreaDropdown.hide()
             self.tentativeSellabletxtFld?.resignFirstResponder()
         }
